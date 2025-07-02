@@ -12,10 +12,88 @@ class Menu extends Component {
 
   doPrint() {
     const content = AppGeneral.getCurrentHTMLContent();
-    var printWindow = window.open("", "", "left=100,top=100");
-    printWindow.document.write(content);
-    printWindow.print();
-    printWindow.close();
+
+    // Check if content exists
+    if (!content || content.trim() === '') {
+      window.alert('No content to print. Please make sure your spreadsheet has data.');
+      return;
+    }
+
+    // Try the popup approach first
+    try {
+      var printWindow = window.open("", "_blank", "width=800,height=600,scrollbars=yes,resizable=yes");
+
+      if (printWindow && !printWindow.closed) {
+        // Popup was allowed - use popup method
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Print Preview</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${content}
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+
+        // Wait for content to load, then print
+        printWindow.onload = function () {
+          printWindow.focus();
+          printWindow.print();
+          // Close after a delay to ensure printing completes
+          setTimeout(() => {
+            printWindow.close();
+          }, 1000);
+        };
+      } else {
+        throw new Error("Popup blocked");
+      }
+    } catch (error) {
+      // Notify user about popup blocker and use fallback
+      console.log("Print popup was blocked, using fallback method");
+      window.alert("Your browser blocked the print popup. Using alternative print method. If printing doesn't work, please allow popups for this site and try again.");
+      this.printFallback(content);
+    }
+  }
+
+  printFallback(content) {
+    // Create a hidden div with the content
+    const printDiv = document.createElement('div');
+    printDiv.innerHTML = `
+      <style>
+        @media print {
+          body * { visibility: hidden; }
+          .print-content, .print-content * { visibility: visible; }
+          .print-content { position: absolute; left: 0; top: 0; width: 100%; }
+          table { border-collapse: collapse; width: 100%; }
+          td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        }
+      </style>
+      <div class="print-content">${content}</div>
+    `;
+    printDiv.style.display = 'none';
+
+    // Add to body
+    document.body.appendChild(printDiv);
+
+    // Print
+    window.print();
+
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(printDiv);
+    }, 1000);
   }
 
   doSave() {
