@@ -8,6 +8,25 @@ class Menu extends Component {
   constructor(props) {
     super(props);
     this.store = new Local(this.props.file);
+    this.state = {
+      showExportOptions: false,
+      exportFormat: 'pdf' // default to PDF
+    };
+    this.menuRef = React.createRef();
+  }
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleClickOutside);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleClickOutside);
+  }
+
+  handleClickOutside = (event) => {
+    if (this.menuRef.current && !this.menuRef.current.contains(event.target)) {
+      this.setState({ showExportOptions: false });
+    }
   }
 
   doPrint() {
@@ -157,13 +176,186 @@ class Menu extends Component {
     this.props.updateSelectedFile("default");
   }
 
+  exportAs() {
+    this.setState(prevState => ({
+      showExportOptions: !prevState.showExportOptions
+    }));
+  }
+
+  handleExportFormatChange = (format) => {
+    this.setState({ exportFormat: format });
+  }
+
+  executeExport = () => {
+    const { exportFormat } = this.state;
+    const filename = this.props.file !== 'default' ? this.props.file : 'spreadsheet';
+
+    if (exportFormat === 'pdf') {
+      this.exportAsPDF(filename);
+    } else if (exportFormat === 'csv') {
+      this.exportAsCSV(filename);
+    }
+
+    // Close the export options after export
+    this.setState({ showExportOptions: false });
+  }
+
+  exportAsPDF(filename) {
+    try {
+      const content = AppGeneral.getCurrentHTMLContent();
+
+      if (!content || content.trim() === '') {
+        window.alert('No content to export. Please make sure your spreadsheet has data.');
+        return;
+      }
+
+      // Create a new window for PDF generation
+      const printWindow = window.open("", "_blank", "width=800,height=600");
+
+      if (printWindow && !printWindow.closed) {
+        printWindow.document.open();
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>${filename}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                color: #000;
+              }
+              // table { 
+              //   border-collapse: collapse; 
+              //   width: 100%; 
+              //   margin: 20px 0;
+              // }
+              // td, th { 
+              //   border: 1px solid #333; 
+              //   padding: 8px; 
+              //   text-align: left; 
+              //   font-size: 12px;
+              // }
+              // th {
+              //   background-color: #f5f5f5;
+              //   font-weight: bold;
+              // }
+              @media print {
+                body { margin: 0; }
+                @page { size: A4; margin: 0.5in; }
+              }
+            </style>
+          </head>
+          <body>
+            ${content}
+            <script>
+              window.onload = function() {
+                window.print();
+                setTimeout(function() {
+                  window.close();
+                }, 1000);
+              }
+            </script>
+          </body>
+          </html>
+        `);
+        printWindow.document.close();
+      } else {
+        window.alert("Please allow popups for this site to export as PDF. Use your browser's print dialog to save as PDF.");
+        window.print(); src / Menu / Menu.css
+      }
+    } catch (error) {
+      console.error('PDF export error:', error);
+      window.alert('Error exporting PDF. Please try again or use the print button.');
+    }
+  }
+
+  exportAsCSV(filename) {
+    try {
+      const csvContent = AppGeneral.getCSVContent();
+
+      if (!csvContent || csvContent.trim() === '') {
+        window.alert('No content to export. Please make sure your spreadsheet has data.');
+        return;
+      }
+
+      // Create blob and download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+
+      if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${filename}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else {
+        // Fallback for older browsers
+        window.alert('CSV download not supported in this browser. Please copy the data manually.');
+      }
+    } catch (error) {
+      console.error('CSV export error:', error);
+      window.alert('Error exporting CSV. Please try again.');
+    }
+  }
+
   render() {
+    const { showExportOptions, exportFormat } = this.state;
+
     return (
-      <div className="Menu">
+      <div className="Menu" ref={this.menuRef}>
         <button onClick={() => this.doSave()}> Save </button>
         <button onClick={() => this.doSaveAs()}> Save As </button>
         <button onClick={() => this.doPrint()}> Print </button>
         <button onClick={() => this.newFile()}> New File </button>
+        <button onClick={() => this.exportAs()}> Export As </button>
+
+        {showExportOptions && (
+          <div className="export-options">
+            <div className="export-format-selection">
+              <h4>Choose Export Format:</h4>
+              <div className="radio-group">
+                <label className="radio-option">
+                  <input
+                    type="radio"
+                    name="exportFormat"
+                    value="pdf"
+                    checked={exportFormat === 'pdf'}
+                    onChange={() => this.handleExportFormatChange('pdf')}
+                  />
+                  <span>PDF</span>
+                </label>
+                <label className="radio-option">
+                  <input
+                    type="radio"
+                    name="exportFormat"
+                    value="csv"
+                    checked={exportFormat === 'csv'}
+                    onChange={() => this.handleExportFormatChange('csv')}
+                  />
+                  <span>CSV</span>
+                </label>
+              </div>
+              <div className="export-actions">
+                <button
+                  className="export-btn"
+                  onClick={this.executeExport}
+                >
+                  Export {exportFormat.toUpperCase()}
+                </button>
+                <button
+                  className="cancel-btn"
+                  onClick={() => this.setState({ showExportOptions: false })}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
