@@ -1,14 +1,8 @@
 const storage = window.localStorage;
 
-export class File{
-	
-	created: string;
-	modified: string;
-	name: string
-	content: string;
-	password: string;
+export class File {
 
-	constructor(created: string, modified: string, content: string, name: string, password ?: string ){
+	constructor(created, modified, content, name, password) {
 		this.created = created;
 		this.modified = modified;
 		this.content = content;
@@ -20,35 +14,48 @@ export class File{
 
 export class Local {
 
-	constructor(){
+	constructor() {
 		this.storage = storage;
 		this.token = null;
 	}
 
-	_saveFile(file: File){
+	_saveFile(file) {
 		// console.log(file.password);
-		let data = {created: file.created, modified: file.modified, content: file.content, password: file.password};
+		let data = { created: file.created, modified: file.modified, content: file.content, password: file.password };
 		this.storage.setItem(file.name, JSON.stringify(data));
 	}
 
-	_getFile(name){
+	_getFile(name) {
 		const rawData = this.storage.getItem(name);
-    	return JSON.parse(rawData);
+		if (!rawData) {
+			return null;
+		}
+
+		try {
+			return JSON.parse(rawData);
+		} catch (error) {
+			console.warn(`Failed to parse JSON for localStorage item "${name}":`, error);
+			return null;
+		}
 	}
 
-	_getAllFiles(){
+	_getAllFiles() {
 		let arr = {};
-		for(let i = 0; i< window.localStorage.length; i++){
+		for (let i = 0; i < window.localStorage.length; i++) {
 			var fname = window.localStorage.key(i);
-    		// console.log(fname);
-    		const data = this._getFile(fname);
-    		arr[fname] = data.modified;
+			// console.log(fname);
+			const data = this._getFile(fname);
+
+			// Only include items that parsed successfully and have the expected structure
+			if (data && data.modified) {
+				arr[fname] = data.modified;
+			}
 		}
 		return arr;
 	}
 
-	_deleteFile(name){
-		console.log("deleting file "+name);
+	_deleteFile(name) {
+		console.log("deleting file " + name);
 		this.storage.removeItem(name);
 	}
 
