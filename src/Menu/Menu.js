@@ -9,25 +9,11 @@ class Menu extends Component {
     super(props);
     this.store = new Local(this.props.file);
     this.state = {
-      showExportOptions: false,
-      exportFormat: 'pdf' // default to PDF
+      exportFormat: '' // default to
     };
-    this.menuRef = React.createRef();
   }
 
-  componentDidMount() {
-    document.addEventListener('mousedown', this.handleClickOutside);
-  }
 
-  componentWillUnmount() {
-    document.removeEventListener('mousedown', this.handleClickOutside);
-  }
-
-  handleClickOutside = (event) => {
-    if (this.menuRef.current && !this.menuRef.current.contains(event.target)) {
-      this.setState({ showExportOptions: false });
-    }
-  }
 
   doPrint() {
     const content = AppGeneral.getCurrentHTMLContent();
@@ -68,10 +54,12 @@ class Menu extends Component {
 
         // Wait for content to load, then print
         printWindow.onload = function () {
+          console.log("printWindow.onload");
           printWindow.focus();
           printWindow.print();
           // Close after a delay to ensure printing completes
           setTimeout(() => {
+            console.log("printWindow.close()");
             printWindow.close();
           }, 1000);
         };
@@ -112,6 +100,7 @@ class Menu extends Component {
     // Clean up
     setTimeout(() => {
       document.body.removeChild(printDiv);
+      console.log("printFallback");
     }, 1000);
   }
 
@@ -176,28 +165,25 @@ class Menu extends Component {
     this.props.updateSelectedFile("default");
   }
 
-  exportAs() {
-    this.setState(prevState => ({
-      showExportOptions: !prevState.showExportOptions
-    }));
-  }
-
-  handleExportFormatChange = (format) => {
+  handleExportChange = (event) => {
+    const format = event.target.value;
+    event.target.value = '';
     this.setState({ exportFormat: format });
-  }
 
-  executeExport = () => {
-    const { exportFormat } = this.state;
-    const filename = this.props.file !== 'default' ? this.props.file : 'spreadsheet';
+    if (format !== '') {
+      const filename = this.props.file !== 'default' ? this.props.file : 'spreadsheet';
 
-    if (exportFormat === 'pdf') {
-      this.exportAsPDF(filename);
-    } else if (exportFormat === 'csv') {
-      this.exportAsCSV(filename);
+      if (format === 'pdf') {
+        this.exportAsPDF(filename);
+      } else if (format === 'csv') {
+        this.exportAsCSV(filename);
+      }
+
+      // Reset the select to default after export
+      setTimeout(() => {
+        this.setState({ exportFormat: '' });
+      }, 100);
     }
-
-    // Close the export options after export
-    this.setState({ showExportOptions: false });
   }
 
   exportAsPDF(filename) {
@@ -225,21 +211,7 @@ class Menu extends Component {
                 margin: 20px; 
                 color: #000;
               }
-              // table { 
-              //   border-collapse: collapse; 
-              //   width: 100%; 
-              //   margin: 20px 0;
-              // }
-              // td, th { 
-              //   border: 1px solid #333; 
-              //   padding: 8px; 
-              //   text-align: left; 
-              //   font-size: 12px;
-              // }
-              // th {
-              //   background-color: #f5f5f5;
-              //   font-weight: bold;
-              // }
+              
               @media print {
                 body { margin: 0; }
                 @page { size: A4; margin: 0.5in; }
@@ -260,6 +232,8 @@ class Menu extends Component {
           </html>
         `);
         printWindow.document.close();
+        console.log("printWindow.document.close()");
+
       } else {
         window.alert("Please allow popups for this site to export as PDF. Use your browser's print dialog to save as PDF.");
         window.print(); src / Menu / Menu.css
@@ -303,59 +277,23 @@ class Menu extends Component {
   }
 
   render() {
-    const { showExportOptions, exportFormat } = this.state;
+    const { exportFormat } = this.state;
 
     return (
-      <div className="Menu" ref={this.menuRef}>
+      <div className="Menu">
         <button onClick={() => this.doSave()}> Save </button>
         <button onClick={() => this.doSaveAs()}> Save As </button>
         <button onClick={() => this.doPrint()}> Print </button>
         <button onClick={() => this.newFile()}> New File </button>
-        <button onClick={() => this.exportAs()}> Export As </button>
-
-        {showExportOptions && (
-          <div className="export-options">
-            <div className="export-format-selection">
-              <h4>Choose Export Format:</h4>
-              <div className="radio-group">
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    name="exportFormat"
-                    value="pdf"
-                    checked={exportFormat === 'pdf'}
-                    onChange={() => this.handleExportFormatChange('pdf')}
-                  />
-                  <span>PDF</span>
-                </label>
-                <label className="radio-option">
-                  <input
-                    type="radio"
-                    name="exportFormat"
-                    value="csv"
-                    checked={exportFormat === 'csv'}
-                    onChange={() => this.handleExportFormatChange('csv')}
-                  />
-                  <span>CSV</span>
-                </label>
-              </div>
-              <div className="export-actions">
-                <button
-                  className="export-btn"
-                  onClick={this.executeExport}
-                >
-                  Export {exportFormat.toUpperCase()}
-                </button>
-                <button
-                  className="cancel-btn"
-                  onClick={() => this.setState({ showExportOptions: false })}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <select
+          value={exportFormat}
+          onChange={this.handleExportChange}
+          className="export-select"
+        >
+          <option value="">Export As...</option>
+          <option value="pdf">Export as PDF</option>
+          <option value="csv">Export as CSV</option>
+        </select>
       </div>
     );
   }
