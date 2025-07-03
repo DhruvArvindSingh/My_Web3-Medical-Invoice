@@ -28,10 +28,25 @@
 }
 
 .App-footers {
-  margin-bottom: 0px !important ;
+  margin-bottom: 0px !important;
 }
 
 .App-files {
+  float: right;
+  z-index: 1000;
+  color: #606c76;
+  background-color: white;
+  border: 1px solid #9b4dca;
+  border-radius: 3px;
+  padding: 20px;
+  margin-top: -835px;
+  margin-left: 10px;
+  margin-right: 26px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  width: 600px;
+}
+
+.App-cloud {
   float: right;
   z-index: 1000;
   color: #606c76;

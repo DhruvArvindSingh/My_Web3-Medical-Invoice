@@ -10,7 +10,8 @@ class Files extends Component {
 		super(props);
 		this.store = new Local(this.props.file);
 		this.state = {
-			files: this.store._getAllFiles()
+			files: this.store._getAllFiles(),
+			searchTerm: ''
 		}
 	}
 
@@ -38,11 +39,24 @@ class Files extends Component {
 		this.props.updateSelectedFile('default');
 	}
 
+	handleSearchChange = (event) => {
+		this.setState({ searchTerm: event.target.value });
+	}
+
+	clearSearch = () => {
+		this.setState({ searchTerm: '' });
+	}
+
 	render() {
 		const files = this.store._getAllFiles();
-		// console.log(JSON.stringify(files));
-		let fileList = Object.keys(files).map(key => {
-			// console.log(key);
+		const { searchTerm } = this.state;
+
+		// Filter files based on search term
+		const filteredFiles = Object.keys(files).filter(key =>
+			key.toLowerCase().includes(searchTerm.toLowerCase())
+		);
+
+		let fileList = filteredFiles.map(key => {
 			return <div key={key}><li>{key} <span>{this._formatDate(files[key])}</span></li>
 				<button onClick={() => { this.editFile(key) }}>Edit</button>
 				<button onClick={() => { this.deleteFile(key) }}>Delete</button>
@@ -51,9 +65,33 @@ class Files extends Component {
 
 		return (
 			<div className="file">
-				<ul>
-					{fileList}
-				</ul>
+				<div className="search-container">
+					<input
+						type="text"
+						placeholder="Search files..."
+						value={searchTerm}
+						onChange={this.handleSearchChange}
+						className="search-input"
+					/>
+					{searchTerm && (
+						<button
+							onClick={this.clearSearch}
+							className="clear-search-btn"
+							title="Clear search"
+						>
+							×
+						</button>
+					)}
+				</div>
+				<div className="search-results">
+					{filteredFiles.length === 0 && searchTerm ? (
+						<div className="no-results">No files found matching "{searchTerm}"</div>
+					) : (
+						<ul>
+							{fileList}
+						</ul>
+					)}
+				</div>
 			</div>
 		);
 	}

@@ -1,0 +1,225 @@
+/* Search container styling */
+.search-container {
+  position: relative;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Export select dropdown styling - matching Menu button style */
+.export-select {
+  background-color: #9b4dca;
+  border: 0.1rem solid #9b4dca;
+  border-radius: .4rem;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  height: 3.8rem;
+  letter-spacing: .1rem;
+  line-height: 3.8rem;
+  padding: 0 3.0rem 0 2.0rem;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+  width: 22%;
+  max-width: 200px;
+  min-width: 150px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  /* Custom dropdown arrow matching Menu style */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 0 29 14" width="29"><path fill="%23fff" d="M9.37727 3.625l5.08154 6.93523L19.54036 3.625"/></svg>');
+  background-position: center right 0.8rem;
+  background-repeat: no-repeat;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.export-select:hover:not(:disabled),
+.export-select:focus {
+  background-color: #606c76;
+  border-color: #606c76;
+  color: #fff;
+  outline: 0;
+  /* Keep the white arrow on hover/focus */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" height="14" viewBox="0 0 29 14" width="29"><path fill="%23fff" d="M9.37727 3.625l5.08154 6.93523L19.54036 3.625"/></svg>');
+}
+
+.export-select:disabled {
+  background-color: #95a5a6;
+  border-color: #95a5a6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.export-select option {
+  background-color: white;
+  color: #606c76;
+  font-weight: normal;
+  text-transform: none;
+  padding: 0.5rem;
+}
+
+.search-input {
+  flex: 1;
+  width: 75%;
+  padding: 10px 15px;
+  padding-right: 40px;
+  /* Space for clear button */
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.search-input:focus {
+  border-color: #9b4dca;
+  box-shadow: 0 0 0 2px rgba(155, 77, 202, 0.1);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.clear-search-btn:hover {
+  background-color: #f0f0f0;
+  color: #666;
+}
+
+/* Loading and status messages */
+.loading {
+  text-align: center;
+  color: #9b4dca;
+  font-style: italic;
+  padding: 15px;
+  border: 1px solid #e1e1e1;
+  border-radius: 4px;
+  background: #f9f9f9;
+  margin: 10px 0;
+}
+
+.no-files {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+  margin: 10px 0;
+  background: #fafafa;
+}
+
+.search-results {
+  flex: 1;
+}
+
+.no-results {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 20px;
+  border: 1px dashed #ddd;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.file ul {
+  list-style: none;
+  overflow-y: scroll;
+  height: 350px;
+  /* Increased height since upload section is removed */
+  margin: 0;
+  padding: 0;
+  border: 1px solid #e1e1e1;
+  border-radius: 4px;
+}
+
+.file li {
+  font-weight: bold;
+  cursor: pointer;
+  border-bottom: 0.1rem solid #e1e1e1;
+  padding: 10px;
+  text-align: left;
+  background: white;
+  transition: background-color 0.2s ease;
+}
+
+.file li:hover {
+  background-color: #f5f5f5;
+}
+
+.file li:last-child {
+  border-bottom: none;
+}
+
+.file span {
+  font-size: 12px;
+  color: #9b4dca;
+  margin-right: 20px;
+  font-weight: normal;
+  float: right;
+}
+
+/* File action buttons */
+.file button {
+  margin-left: 10px;
+  margin-top: 5px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border: 1px solid #e1e1e1;
+  border-radius: 3px;
+  background: #9b4dca;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .search-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .export-select {
+    width: 100%;
+    min-width: auto;
+    max-width: none;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+}
+
+/*
+td:first-child,
+th:first-child {
+  padding-left: 0;
+}
+
+td:last-child,
+th:last-child {
+  padding-right: 0;
+}
+606c76*/

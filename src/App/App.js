@@ -6,6 +6,7 @@ import { DATA } from "../app-data.js";
 import Menu from "../Menu/Menu";
 import Files from "../Files/Files";
 import { ConnectKitButton } from "connectkit";
+import Cloud from "../Cloud/Cloud";
 
 class App extends Component {
   constructor(props) {
@@ -14,9 +15,11 @@ class App extends Component {
       selectedFile: "default",
       device: AppGeneral.getDeviceType(),
       listFiles: false,
+      cloud: false,
     };
     this.updateSelectedFile = this.updateSelectedFile.bind(this);
     this.toggleListFiles = this.toggleListFiles.bind(this);
+    this.toggleCloud = this.toggleCloud.bind(this);
   }
 
   updateSelectedFile(selectedFile) {
@@ -28,6 +31,12 @@ class App extends Component {
   toggleListFiles() {
     this.setState((prevState) => ({
       listFiles: !prevState.listFiles,
+    }));
+  }
+
+  toggleCloud() {
+    this.setState((prevState) => ({
+      cloud: !prevState.cloud,
     }));
   }
 
@@ -66,6 +75,9 @@ class App extends Component {
           <span className="Connect-list">
             <ConnectKitButton />
           </span>
+          <button className="App-list" onClick={this.toggleCloud}>
+            Cloud
+          </button>
           <button className="App-list" onClick={this.toggleListFiles}>
             List Files{" "}
           </button>
@@ -87,6 +99,14 @@ class App extends Component {
               file={this.state.selectedFile}
               updateSelectedFile={this.updateSelectedFile}
             />{" "}
+          </div>
+        ) : null}
+        {this.state.cloud ? (
+          <div className="App-cloud">
+            <Cloud
+              file={this.state.selectedFile}
+              updateSelectedFile={this.updateSelectedFile}
+            />
           </div>
         ) : null}
       </div>
