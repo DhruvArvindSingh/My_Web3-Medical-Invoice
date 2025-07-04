@@ -1,3 +1,146 @@
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e1e1e1;
+  background-color: #f9f9f9;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px 20px;
+  background-color: #f9f9f9;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+}
+
+.tab-button:hover:not(:disabled) {
+  background-color: #f0f0f0;
+  color: #9b4dca;
+}
+
+.tab-button.active {
+  background-color: #fff;
+  color: #9b4dca;
+  border-bottom-color: #9b4dca;
+  font-weight: 700;
+}
+
+.tab-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.tab-button:disabled:hover {
+  background-color: #f9f9f9;
+  color: #666;
+}
+
+.test-dropbox-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  background-color: #ff6b6b;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.test-dropbox-btn:hover:not(:disabled) {
+  background-color: #ff5252;
+}
+
+.test-dropbox-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.debug-dropbox-btn {
+  position: absolute;
+  right: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  background-color: #6c5ce7;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.debug-dropbox-btn:hover:not(:disabled) {
+  background-color: #5f3dc4;
+}
+
+.debug-dropbox-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.test-download-btn {
+  position: absolute;
+  right: 130px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  background-color: #00b894;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.test-download-btn:hover:not(:disabled) {
+  background-color: #00a085;
+}
+
+.test-download-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.raw-api-btn {
+  position: absolute;
+  right: 190px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 8px 12px;
+  background-color: #fdcb6e;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.raw-api-btn:hover:not(:disabled) {
+  background-color: #f39c12;
+}
+
+.raw-api-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 /* Search container styling */
 .search-container {
   position: relative;
@@ -192,10 +335,17 @@
   transition: all 0.2s ease;
 }
 
-
-
 /* Responsive design for smaller screens */
 @media (max-width: 600px) {
+  .tab-navigation {
+    margin-bottom: 15px;
+  }
+
+  .tab-button {
+    padding: 10px 15px;
+    font-size: 13px;
+  }
+
   .search-container {
     flex-direction: column;
     gap: 8px;
