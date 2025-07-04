@@ -166,71 +166,7 @@ class Cloud extends Component {
         this.setState({ loading: false });
     };
 
-    // Upload all invoices from localStorage to S3
-    uploadAllInvoices = async () => {
-        const folderName = prompt("Enter folder name for all invoices:");
 
-        if (!folderName) {
-            return; // User cancelled
-        }
-
-        if (folderName.trim() === '') {
-            alert("Please enter a valid folder name");
-            return;
-        }
-
-        this.setState({ loading: true });
-
-        try {
-            // Get all files from localStorage
-            const allLocalFiles = this.localStore._getAllFiles();
-            const fileKeys = Object.keys(allLocalFiles);
-
-            if (fileKeys.length === 0) {
-                alert("No invoices found in local storage to upload");
-                this.setState({ loading: false });
-                return;
-            }
-
-            let successCount = 0;
-            let totalFiles = fileKeys.length;
-
-            // Upload each file separately
-            for (const fileName of fileKeys) {
-                try {
-                    const fileData = this.localStore._getFile(fileName);
-                    if (fileData && fileData.content) {
-                        // Create file path with folder structure
-                        const s3FileName = `${folderName.trim()}/${fileName}.txt`;
-
-                        const success = await this.saveFileToS3(s3FileName, fileData.content);
-                        if (success) {
-                            successCount++;
-                        }
-                    }
-                } catch (err) {
-                    console.error(`Failed to upload file ${fileName}:`, err);
-                }
-            }
-
-            // Final refresh after all uploads
-            await this.loadFilesFromS3();
-
-            if (successCount === totalFiles) {
-                alert(`All ${totalFiles} invoices uploaded successfully to folder "${folderName}"`);
-            } else if (successCount > 0) {
-                alert(`${successCount} out of ${totalFiles} invoices uploaded successfully to folder "${folderName}"`);
-            } else {
-                alert("Failed to upload any invoices to cloud storage");
-            }
-
-        } catch (err) {
-            console.error("Failed to upload all invoices", err);
-            alert("Failed to upload all invoices to cloud storage");
-        }
-
-        this.setState({ loading: false });
-    };
 
     // Edit file - now loads from S3
     editFile = async (key) => {
@@ -319,8 +255,6 @@ class Cloud extends Component {
 
         if (format === 'this') {
             this.uploadCurrentInvoice();
-        } else if (format === 'all') {
-            this.uploadAllInvoices();
         }
     }
 
@@ -363,7 +297,6 @@ class Cloud extends Component {
                     >
                         <option value="">📤 Upload...</option>
                         <option value="this">💾 Upload Current Invoice</option>
-                        <option value="all">📦 Upload All Invoices</option>
                     </select>
 
                     <input
