@@ -45,11 +45,8 @@
   color: #666;
 }
 
-.test-dropbox-btn {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
+.test-connection-btn {
+  margin-left: 10px;
   padding: 8px 12px;
   background-color: #ff6b6b;
   border: none;
@@ -58,46 +55,20 @@
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  font-weight: 600;
 }
 
-.test-dropbox-btn:hover:not(:disabled) {
+.test-connection-btn:hover:not(:disabled) {
   background-color: #ff5252;
 }
 
-.test-dropbox-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.debug-dropbox-btn {
-  position: absolute;
-  right: 70px;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 8px 12px;
-  background-color: #6c5ce7;
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.debug-dropbox-btn:hover:not(:disabled) {
-  background-color: #5f3dc4;
-}
-
-.debug-dropbox-btn:disabled {
+.test-connection-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
 .test-download-btn {
-  position: absolute;
-  right: 130px;
-  top: 50%;
-  transform: translateY(-50%);
+  margin-left: 5px;
   padding: 8px 12px;
   background-color: #00b894;
   border: none;
@@ -106,6 +77,7 @@
   font-size: 12px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  font-weight: 600;
 }
 
 .test-download-btn:hover:not(:disabled) {
@@ -113,30 +85,6 @@
 }
 
 .test-download-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.raw-api-btn {
-  position: absolute;
-  right: 190px;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 8px 12px;
-  background-color: #fdcb6e;
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.raw-api-btn:hover:not(:disabled) {
-  background-color: #f39c12;
-}
-
-.raw-api-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }

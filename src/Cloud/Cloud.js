@@ -1,38 +1,9 @@
 import React, { Component, useState, useEffect } from "react";
 import './Cloud.css';
-import {
-    S3Client,
-    PutObjectCommand,
-    ListObjectsV2Command,
-    GetObjectCommand,
-    DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Dropbox } from 'dropbox';
 import * as AppGeneral from '../socialcalc/AppGeneral';
 import { Local } from '../storage/LocalStorage.js';
 import { DATA } from '../app-data.js';
-
-// ⚠️ NEVER put real secrets in frontend for production!
-// Use React's built-in environment variables (must start with REACT_APP_)
-const REGION = process.env.REACT_APP_REGION;
-const BUCKET = process.env.REACT_APP_BUCKET;
-const ACCESS_KEY = process.env.REACT_APP_ACCESS_KEY;
-const SECRET_KEY = process.env.REACT_APP_SECRET_KEY;
-const DROPBOX_ACCESS_TOKEN = process.env.REACT_APP_DROPBOX_ACCESS_TOKEN;
-
-const s3 = new S3Client({
-    region: REGION,
-    credentials: {
-        accessKeyId: ACCESS_KEY,
-        secretAccessKey: SECRET_KEY,
-    },
-});
-
-const dropbox = new Dropbox({
-    accessToken: DROPBOX_ACCESS_TOKEN,
-    fetch: fetch
-});
+import ApiService from '../services/ApiService';
 
 class Cloud extends Component {
     constructor(props) {
@@ -72,14 +43,6 @@ class Cloud extends Component {
         } else if (tab === 'dropbox' && Object.keys(this.state.dropboxFiles).length === 0) {
             await this.loadFilesFromDropbox();
         }
-
-        // Debug info for Dropbox
-        if (tab === 'dropbox') {
-            console.log("Dropbox access token configured:", !!DROPBOX_ACCESS_TOKEN);
-            if (DROPBOX_ACCESS_TOKEN) {
-                console.log("Dropbox access token length:", DROPBOX_ACCESS_TOKEN.length);
-            }
-        }
     };
 
     // Get current files based on active tab
@@ -87,68 +50,35 @@ class Cloud extends Component {
         return this.state.activeTab === 's3' ? this.state.s3Files : this.state.dropboxFiles;
     };
 
-    // Test Dropbox connection
-    testDropboxConnection = async () => {
-        if (!DROPBOX_ACCESS_TOKEN) {
-            alert("Dropbox access token not configured");
-            return false;
-        }
-
-        // Validate token format
-        if (!this.validateDropboxToken(DROPBOX_ACCESS_TOKEN)) {
-            alert("Dropbox access token format appears invalid. Please check your token.");
-            return false;
-        }
-
+    // Test API connection
+    testConnection = async () => {
         try {
-            const response = await dropbox.usersGetCurrentAccount();
-            console.log("Dropbox connection successful:", response.result);
-            alert(`Connected to Dropbox as: ${response.result.name.display_name}`);
+            if (this.state.activeTab === 's3') {
+                await ApiService.listAllS3();
+                alert("S3 connection successful!");
+            } else {
+                await ApiService.listAllDropbox();
+                alert("Dropbox connection successful!");
+            }
             return true;
         } catch (err) {
-            console.error("Dropbox connection failed:", err);
-            console.error("Error details:", err.error);
-
-            if (err.status === 401) {
-                alert("Dropbox authentication failed (401). Your access token may be invalid or expired. Please check your token and app permissions.");
-            } else if (err.status === 403) {
-                alert("Dropbox permission denied (403). Your app may not have sufficient permissions.");
+            console.error("Connection test failed:", err);
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
             } else {
-                alert(`Dropbox connection failed with status ${err.status}. Please check your access token.`);
+                const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+                alert(`${provider} connection failed. Please check your configuration.`);
             }
             return false;
         }
     };
 
-    // Validate Dropbox token format
-    validateDropboxToken = (token) => {
-        // Dropbox tokens are typically 64 characters long and contain alphanumeric characters
-        if (!token || typeof token !== 'string') {
-            return false;
-        }
-
-        // Check if token looks like a valid Dropbox token (basic validation)
-        const tokenRegex = /^[A-Za-z0-9_-]{60,}$/;
-        return tokenRegex.test(token);
-    };
-
-    // Debug Dropbox configuration
-    debugDropboxConfig = () => {
-        console.log("=== Dropbox Configuration Debug ===");
-        console.log("Access token configured:", !!DROPBOX_ACCESS_TOKEN);
-        console.log("Access token length:", DROPBOX_ACCESS_TOKEN ? DROPBOX_ACCESS_TOKEN.length : 0);
-        console.log("Token format valid:", this.validateDropboxToken(DROPBOX_ACCESS_TOKEN));
-        console.log("Token preview:", DROPBOX_ACCESS_TOKEN ? `${DROPBOX_ACCESS_TOKEN.substring(0, 10)}...` : "Not set");
-        console.log("Dropbox client initialized:", !!dropbox);
-        console.log("Available files:", Object.keys(this.state.dropboxFiles));
-        console.log("================================");
-    };
-
-    // Test file download from Dropbox
-    testDropboxFileDownload = async () => {
-        const files = Object.keys(this.state.dropboxFiles);
+    // Test file download
+    testFileDownload = async () => {
+        const files = Object.keys(this.getCurrentFiles());
         if (files.length === 0) {
-            alert("No files available in Dropbox to test download.");
+            const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+            alert(`No files available in ${provider} to test download.`);
             return;
         }
 
@@ -156,7 +86,10 @@ class Cloud extends Component {
         console.log("Testing download of file:", testFileName);
 
         try {
-            const fileData = await this.getFileFromDropbox(testFileName);
+            const fileData = this.state.activeTab === 's3'
+                ? await this.getFileFromS3(testFileName)
+                : await this.getFileFromDropbox(testFileName);
+
             if (fileData && fileData.content) {
                 alert(`Successfully downloaded "${testFileName}" (${fileData.content.length} characters)`);
             } else {
@@ -167,68 +100,18 @@ class Cloud extends Component {
         }
     };
 
-    // Test raw Dropbox API response
-    testRawDropboxResponse = async () => {
-        const files = Object.keys(this.state.dropboxFiles);
-        if (files.length === 0) {
-            alert("No files available in Dropbox to test.");
-            return;
-        }
-
-        const testFileName = files[0];
-        console.log("=== RAW DROPBOX API TEST ===");
-        console.log("Testing raw API call for file:", testFileName);
-
-        try {
-            // Test the raw API call
-            const response = await dropbox.filesDownload({ path: `/${testFileName}` });
-            console.log("Raw API response:", response);
-            console.log("Response type:", typeof response);
-            console.log("Response keys:", Object.keys(response));
-            console.log("Result type:", typeof response.result);
-            console.log("Result keys:", Object.keys(response.result));
-
-            if (response.result.fileBinary) {
-                console.log("fileBinary exists");
-                console.log("fileBinary type:", typeof response.result.fileBinary);
-                console.log("fileBinary constructor:", response.result.fileBinary.constructor.name);
-                console.log("fileBinary size:", response.result.fileBinary.size || response.result.fileBinary.byteLength || 'unknown');
-            } else if (response.result.fileBlob) {
-                console.log("fileBlob exists");
-                console.log("fileBlob type:", typeof response.result.fileBlob);
-                console.log("fileBlob constructor:", response.result.fileBlob.constructor.name);
-                console.log("fileBlob size:", response.result.fileBlob.size || 'unknown');
-            } else {
-                console.log("Neither fileBinary nor fileBlob exists");
-                console.log("Available properties:", Object.keys(response.result));
-            }
-
-            console.log("=== END RAW DROPBOX API TEST ===");
-            alert("Raw API test completed. Check console for details.");
-        } catch (err) {
-            console.error("Raw API test failed:", err);
-            alert(`Raw API test failed: ${err.message}`);
-        }
-    };
-
     // Load all files from S3 bucket
     loadFilesFromS3 = async () => {
         this.setState({ loading: true });
         try {
-            const data = await s3.send(new ListObjectsV2Command({ Bucket: BUCKET }));
-            const contents = data.Contents || [];
+            const response = await ApiService.listAllS3();
 
-            // Convert S3 objects to the expected format
-            const filesObj = {};
-            contents.forEach(file => {
-                if (file.Key && file.LastModified) {
-                    filesObj[file.Key] = file.LastModified.getTime();
-                }
-            });
 
-            this.setState({ s3Files: filesObj, loading: false });
+
+            this.setState({ s3Files: response.s3Files, loading: false });
         } catch (err) {
             console.error("Failed to load files from S3", err);
+            alert("Failed to load files from S3. Please check your authentication and try again.");
             this.setState({ loading: false });
         }
     };
@@ -236,13 +119,38 @@ class Cloud extends Component {
     // Get file content from S3
     getFileFromS3 = async (key) => {
         try {
-            const command = new GetObjectCommand({
-                Bucket: BUCKET,
-                Key: key,
-            });
+            console.log("Getting file from S3 via API:", key);
+            const response = await ApiService.getFileS3(key);
+            console.log("S3 API response:", response);
+            console.log("Response type:", typeof response);
+            console.log("Response keys:", Object.keys(response));
 
-            const response = await s3.send(command);
-            const content = await response.Body.transformToString();
+            // Check if we have content in the response
+            if (!response) {
+                console.error("No response received from S3 API");
+                throw new Error("No response received from S3 API");
+            }
+
+            // Handle different possible response formats
+            let content = null;
+            if (response.content !== undefined) {
+                content = response.content;
+            } else if (response.data && response.data.content !== undefined) {
+                content = response.data.content;
+            } else if (typeof response === 'string') {
+                content = response;
+            } else {
+                console.error("Unexpected response format:", response);
+                throw new Error("Unexpected response format from S3 API");
+            }
+
+            if (content === null || content === undefined) {
+                console.error("No content found in response");
+                throw new Error("No file content received from S3");
+            }
+
+            console.log("Successfully extracted content, length:", content.length);
+            console.log("Content preview (first 100 chars):", content.substring(0, 100));
 
             return {
                 content: content,
@@ -251,6 +159,19 @@ class Cloud extends Component {
             };
         } catch (err) {
             console.error("Failed to get file from S3", err);
+            console.error("Error details:", {
+                message: err.message,
+                status: err.response?.status,
+                data: err.response?.data
+            });
+
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else if (err.response?.status === 404) {
+                alert("File not found in S3.");
+            } else {
+                alert("Failed to load file from S3. Please check the console for details.");
+            }
             return null;
         }
     };
@@ -260,20 +181,19 @@ class Cloud extends Component {
         console.log("fileName", fileName);
         console.log("content", content);
         try {
-            const params = {
-                Bucket: BUCKET,
-                Key: fileName,
-                Body: content,
-                ContentType: 'text/plain'
-            };
-
-            await s3.send(new PutObjectCommand(params));
+            const response = await ApiService.uploadFileS3(fileName, content);
+            console.log("response", response);
 
             // Refresh file list after successful upload
             await this.loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to save file to S3", err);
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else {
+                alert("Failed to save file to S3. Please try again.");
+            }
             return false;
         }
     };
@@ -281,16 +201,20 @@ class Cloud extends Component {
     // Delete file from S3
     deleteFileFromS3 = async (key) => {
         try {
-            await s3.send(new DeleteObjectCommand({
-                Bucket: BUCKET,
-                Key: key
-            }));
+            await ApiService.deleteFileS3(key);
 
             // Refresh file list after successful deletion
             await this.loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to delete file from S3", err);
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else if (err.response?.status === 404) {
+                alert("File not found in S3.");
+            } else {
+                alert("Failed to delete file from S3. Please try again.");
+            }
             return false;
         }
     };
@@ -299,29 +223,18 @@ class Cloud extends Component {
     loadFilesFromDropbox = async () => {
         this.setState({ loading: true });
         try {
-            // Check if access token is configured
-            if (!DROPBOX_ACCESS_TOKEN) {
-                console.error("Dropbox access token not configured");
-                alert("Dropbox access token not configured. Please set REACT_APP_DROPBOX_ACCESS_TOKEN in your environment variables.");
-                this.setState({ loading: false });
-                return;
-            }
+            const response = await ApiService.listAllDropbox();
+            console.log("response", response);
 
-            const response = await dropbox.filesListFolder({ path: '' });
-            const files = response.result.entries || [];
 
-            // Convert Dropbox files to the expected format
-            const filesObj = {};
-            files.forEach(file => {
-                if (file['.tag'] === 'file') {
-                    filesObj[file.name] = new Date(file.client_modified).getTime();
-                }
-            });
-
-            this.setState({ dropboxFiles: filesObj, loading: false });
+            this.setState({ dropboxFiles: response.dropboxFiles, loading: false });
         } catch (err) {
             console.error("Failed to load files from Dropbox", err);
-            console.error("Error details:", err.error);
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else {
+                alert("Failed to load files from Dropbox. Please check your authentication and try again.");
+            }
             this.setState({ loading: false });
         }
     };
@@ -329,60 +242,38 @@ class Cloud extends Component {
     // Get file content from Dropbox
     getFileFromDropbox = async (fileName) => {
         try {
-            console.log("=== DROPBOX DOWNLOAD DEBUG ===");
-            console.log("Attempting to download file:", fileName);
+            console.log("Getting file from Dropbox via API:", fileName);
+            const response = await ApiService.getFileDropbox(fileName);
+            console.log("Dropbox API response:", response);
+            console.log("Response type:", typeof response);
+            console.log("Response keys:", Object.keys(response));
 
-            const response = await dropbox.filesDownload({ path: `/${fileName}` });
-            console.log("Full Dropbox response:", response);
-            console.log("Response result:", response.result);
-            console.log("Response result keys:", Object.keys(response.result));
+            // Check if we have content in the response
+            if (!response) {
+                console.error("No response received from Dropbox API");
+                throw new Error("No response received from Dropbox API");
+            }
 
-            // Check if fileBinary or fileBlob exists
-            let fileBinary = response.result.fileBinary || response.result.fileBlob;
-            if (!fileBinary) {
-                console.error("No fileBinary or fileBlob in response");
-                console.log("Available properties:", Object.keys(response.result));
+            // Handle different possible response formats
+            let content = null;
+            if (response.content !== undefined) {
+                content = response.content;
+            } else if (response.data && response.data.content !== undefined) {
+                content = response.data.content;
+            } else if (typeof response === 'string') {
+                content = response;
+            } else {
+                console.error("Unexpected response format:", response);
+                throw new Error("Unexpected response format from Dropbox API");
+            }
+
+            if (content === null || content === undefined) {
+                console.error("No content found in response");
                 throw new Error("No file content received from Dropbox");
             }
 
-            console.log("Using file content from:", response.result.fileBinary ? "fileBinary" : "fileBlob");
-            console.log("File binary type:", typeof fileBinary);
-            console.log("File binary constructor:", fileBinary.constructor.name);
-            console.log("File binary properties:", Object.getOwnPropertyNames(fileBinary));
-
-            let content;
-
-            if (fileBinary instanceof ArrayBuffer) {
-                console.log("Processing as ArrayBuffer");
-                const decoder = new TextDecoder();
-                content = decoder.decode(fileBinary);
-            } else if (fileBinary instanceof Blob) {
-                console.log("Processing as Blob");
-                content = await fileBinary.text();
-            } else if (typeof fileBinary === 'string') {
-                console.log("Processing as string");
-                content = fileBinary;
-            } else if (fileBinary && typeof fileBinary.arrayBuffer === 'function') {
-                console.log("Processing as File-like object with arrayBuffer method");
-                const arrayBuffer = await fileBinary.arrayBuffer();
-                const decoder = new TextDecoder();
-                content = decoder.decode(arrayBuffer);
-            } else if (fileBinary && fileBinary.buffer) {
-                console.log("Processing as object with buffer property");
-                const decoder = new TextDecoder();
-                content = decoder.decode(fileBinary.buffer);
-            } else {
-                console.error("Unexpected file binary format:", fileBinary);
-                console.error("File binary toString():", fileBinary.toString());
-                console.error("File binary JSON:", JSON.stringify(fileBinary, null, 2));
-                throw new Error("Unexpected file format received from Dropbox");
-            }
-
-            console.log("Successfully extracted content");
-            console.log("Content length:", content.length);
-            console.log("Content preview (first 200 chars):", content.substring(0, 200));
-            console.log("Content preview (last 200 chars):", content.substring(content.length - 200));
-            console.log("=== END DROPBOX DOWNLOAD DEBUG ===");
+            console.log("Successfully extracted content, length:", content.length);
+            console.log("Content preview (first 100 chars):", content.substring(0, 100));
 
             return {
                 content: content,
@@ -390,32 +281,21 @@ class Cloud extends Component {
                 created: this.state.dropboxFiles[fileName] || Date.now()
             };
         } catch (err) {
-            console.error("=== DROPBOX DOWNLOAD ERROR ===");
             console.error("Failed to get file from Dropbox", err);
-            console.error("Error name:", err.name);
-            console.error("Error message:", err.message);
-            console.error("Error stack:", err.stack);
+            console.error("Error details:", {
+                message: err.message,
+                status: err.response?.status,
+                data: err.response?.data
+            });
 
-            if (err.error) {
-                console.error("Error details:", err.error);
-            }
-            if (err.status) {
-                console.error("Error status:", err.status);
-            }
-            if (err.response) {
-                console.error("Error response:", err.response);
-            }
-
-            console.error("=== END DROPBOX DOWNLOAD ERROR ===");
-
-            if (err.status === 401) {
-                alert("Dropbox authentication failed (401). Please check your access token.");
-            } else if (err.status === 404) {
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else if (err.response?.status === 404) {
                 alert("File not found in Dropbox. The file may have been moved or deleted.");
-            } else if (err.status === 403) {
+            } else if (err.response?.status === 403) {
                 alert("Permission denied. Your app may not have read access to this file.");
             } else {
-                alert(`Failed to load file from Dropbox (Status: ${err.status || 'Unknown'}). Please check the console for details.`);
+                alert("Failed to load file from Dropbox. Please check the console for details.");
             }
             return null;
         }
@@ -426,40 +306,23 @@ class Cloud extends Component {
         console.log("fileName", fileName);
         console.log("content", content);
 
-        // Check if access token is configured
-        if (!DROPBOX_ACCESS_TOKEN) {
-            console.error("Dropbox access token not configured");
-            alert("Dropbox access token not configured. Please set REACT_APP_DROPBOX_ACCESS_TOKEN in your environment variables.");
-            return false;
-        }
-
         try {
-            // Convert string content to ArrayBuffer for Dropbox API
-            const encoder = new TextEncoder();
-            const contentBuffer = encoder.encode(content);
-
-            await dropbox.filesUpload({
-                path: `/${fileName}`,
-                contents: contentBuffer,
-                mode: { '.tag': 'overwrite' },
-                autorename: true
-            });
+            await ApiService.uploadFileDropbox(fileName, content);
 
             // Refresh file list after successful upload
             await this.loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to save file to Dropbox", err);
-            console.error("Error details:", err.error);
 
-            if (err.status === 401) {
-                alert("Dropbox authentication failed (401). Your access token may be invalid or expired. Please check your token and app permissions.");
-            } else if (err.status === 403) {
-                alert("Dropbox permission denied (403). Your app may not have sufficient permissions.");
-            } else if (err.status === 400) {
-                alert("Dropbox request failed (400). Please check the file name and content.");
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else if (err.response?.status === 403) {
+                alert("Permission denied. Your app may not have sufficient permissions.");
+            } else if (err.response?.status === 400) {
+                alert("Bad request. Please check the file name and content.");
             } else {
-                alert(`Dropbox upload failed with status ${err.status}. Please check your configuration.`);
+                alert("Failed to save file to Dropbox. Please try again.");
             }
             return false;
         }
@@ -468,13 +331,20 @@ class Cloud extends Component {
     // Delete file from Dropbox
     deleteFileFromDropbox = async (fileName) => {
         try {
-            await dropbox.filesDeleteV2({ path: `/${fileName}` });
+            await ApiService.deleteFileDropbox(fileName);
 
             // Refresh file list after successful deletion
             await this.loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to delete file from Dropbox", err);
+            if (err.response?.status === 401) {
+                alert("Authentication failed. Please login and try again.");
+            } else if (err.response?.status === 404) {
+                alert("File not found in Dropbox.");
+            } else {
+                alert("Failed to delete file from Dropbox. Please try again.");
+            }
             return false;
         }
     };
@@ -669,41 +539,22 @@ class Cloud extends Component {
                     >
                         📦 Dropbox
                     </button>
-                    {activeTab === 'dropbox' && (
-                        <>
-                            <button
-                                className="test-dropbox-btn"
-                                onClick={this.testDropboxConnection}
-                                disabled={loading}
-                                title="Test Dropbox Connection"
-                            >
-                                🔧 Test
-                            </button>
-                            <button
-                                className="debug-dropbox-btn"
-                                onClick={this.debugDropboxConfig}
-                                title="Debug Dropbox Configuration"
-                            >
-                                🐛 Debug
-                            </button>
-                            <button
-                                className="test-download-btn"
-                                onClick={this.testDropboxFileDownload}
-                                disabled={loading}
-                                title="Test File Download"
-                            >
-                                📥 Test Download
-                            </button>
-                            <button
-                                className="raw-api-btn"
-                                onClick={this.testRawDropboxResponse}
-                                disabled={loading}
-                                title="Test Raw API Response"
-                            >
-                                🔍 Raw API
-                            </button>
-                        </>
-                    )}
+                    <button
+                        className="test-connection-btn"
+                        onClick={this.testConnection}
+                        disabled={loading}
+                        title={`Test ${activeTab === 's3' ? 'S3' : 'Dropbox'} Connection`}
+                    >
+                        🔧 Test Connection
+                    </button>
+                    <button
+                        className="test-download-btn"
+                        onClick={this.testFileDownload}
+                        disabled={loading}
+                        title="Test File Download"
+                    >
+                        📥 Test Download
+                    </button>
                 </div>
 
                 <div className="search-container">

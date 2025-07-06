@@ -1,19 +1,26 @@
 const webpack = require('webpack');
 
 module.exports = function override(config, env) {
-    // Add Node.js polyfills
+    // Minimal polyfills for Web3 functionality only
     config.resolve.fallback = {
         ...config.resolve.fallback,
-        "crypto": require.resolve("crypto-browserify"),
-        "stream": require.resolve("stream-browserify"),
-        "buffer": require.resolve("buffer"),
+        "crypto": false,
+        "stream": false,
+        "buffer": false,
+        "process": false,
+        "path": false,
+        "os": false,
+        "fs": false,
+        "net": false,
+        "tls": false,
+        "child_process": false,
     };
 
-    // Add plugins
+    // Add minimal plugins for Web3
     config.plugins = [
         ...config.plugins,
         new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
+            process: 'process/browser',
         }),
     ];
 
