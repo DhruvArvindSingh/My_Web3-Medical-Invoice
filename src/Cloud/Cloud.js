@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import './Cloud.css';
 import * as AppGeneral from '../socialcalc/AppGeneral';
-import { Local } from '../storage/LocalStorage.js';
+import { Local, File } from '../storage/LocalStorage.js';
 import { DATA } from '../app-data.js';
 import ApiService from '../services/ApiService';
 
@@ -14,6 +14,10 @@ const Cloud = ({ file, updateSelectedFile }) => {
     const [loading, setLoading] = useState(false);
     const [uploadFile, setUploadFile] = useState(null);
     const [exportFormat, setExportFormat] = useState('');
+    const [selectedCloudFiles, setSelectedCloudFiles] = useState({});
+    const [showTransferAlert, setShowTransferAlert] = useState(false);
+    const [conflictFiles, setConflictFiles] = useState([]);
+    const [alertMessage, setAlertMessage] = useState('');
 
     const loadFiles = async () => {
         if (activeTab === 's3') {
@@ -453,30 +457,154 @@ const Cloud = ({ file, updateSelectedFile }) => {
         return new Date(timestamp).toLocaleString();
     };
 
+    // File selection management
+    const toggleCloudFileSelection = (key) => {
+        setSelectedCloudFiles(prev => ({
+            ...prev,
+            [key]: !prev[key]
+        }));
+    };
+
+    const getSelectedCloudFiles = () => {
+        return Object.keys(selectedCloudFiles).filter(key => selectedCloudFiles[key]);
+    };
+
+    const hasSelectedCloudFiles = () => {
+        return getSelectedCloudFiles().length > 0;
+    };
+
+    // Conflict detection
+    const isFileExistsLocally = (filename) => {
+        const localFiles = localStoreRef.current._getAllFiles();
+        return Object.keys(localFiles).includes(filename);
+    };
+
     const files = getCurrentFiles();
     const filteredFiles = Object.keys(files).filter(key =>
         key.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // Transfer functions
+    const moveToLocal = async () => {
+        const selectedFiles = getSelectedCloudFiles();
+        if (selectedFiles.length === 0) {
+            alert('No files selected for download');
+            return;
+        }
+
+        // Check for conflicts
+        const conflicts = selectedFiles.filter(filename => isFileExistsLocally(filename));
+        if (conflicts.length > 0) {
+            setConflictFiles(conflicts);
+            setAlertMessage(`${conflicts.length} file(s) already exist locally. Overwrite existing files?`);
+            setShowTransferAlert(true);
+            return;
+        }
+
+        await executeLocalDownload(selectedFiles);
+    };
+
+    const executeLocalDownload = async (fileNames) => {
+        setLoading(true);
+        try {
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const fileName of fileNames) {
+                try {
+                    const success = await downloadAndSaveFile(fileName);
+                    if (success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    console.error(`Error downloading ${fileName}:`, error);
+                    errorCount++;
+                }
+            }
+
+            // Clear selections
+            setSelectedCloudFiles({});
+            
+            if (successCount > 0) {
+                alert(`Successfully downloaded ${successCount} file(s) to local storage${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
+            } else {
+                alert('Failed to download any files');
+            }
+
+        } catch (error) {
+            console.error('Batch download error:', error);
+            alert('Error during batch download');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const downloadAndSaveFile = async (filename) => {
+        try {
+            const fileData = activeTab === 's3'
+                ? await getFileFromS3(filename)
+                : await getFileFromDropbox(filename);
+
+            if (!fileData || !fileData.content) {
+                return false;
+            }
+
+            // Create a new File object using the File class
+            const newFile = new File(
+                fileData.created || new Date().toString(),
+                fileData.modified || new Date().toString(),
+                encodeURIComponent(fileData.content),
+                filename,
+                1 // password/billType parameter
+            );
+
+            // Save to local storage using the Local class _saveFile method
+            localStoreRef.current._saveFile(newFile);
+            return true;
+        } catch (error) {
+            console.error(`Error downloading file ${filename}:`, error);
+            return false;
+        }
+    };
+
     const fileList = filteredFiles.map(key => {
         return (
-            <div key={key}>
-                <li>{key} <span>{formatDate(files[key])}</span></li>
-                <button
-                    onClick={() => editFile(key)}
-                    disabled={loading}
-                >
-                    {loading ? 'Loading...' : 'Edit'}
-                </button>
-                <button
-                    onClick={(event) => deleteFile(key, event)}
-                    disabled={loading}
-                >
-                    {loading ? 'Deleting...' : 'Delete'}
-                </button>
+            <div key={key} className="file-item">
+                <div className="file-info">
+                    <input
+                        type="checkbox"
+                        checked={selectedCloudFiles[key] || false}
+                        onChange={() => toggleCloudFileSelection(key)}
+                        className="file-checkbox"
+                    />
+                    <div className="file-details">
+                        <span className="file-name">{key}</span>
+                        <span className="file-date">{formatDate(files[key])}</span>
+                    </div>
+                </div>
+                <div className="file-actions">
+                    <button
+                        onClick={() => editFile(key)}
+                        disabled={loading}
+                        className="edit-btn"
+                    >
+                        {loading ? 'Loading...' : 'Edit'}
+                    </button>
+                    <button
+                        onClick={(event) => deleteFile(key, event)}
+                        disabled={loading}
+                        className="delete-btn"
+                    >
+                        {loading ? 'Deleting...' : 'Delete'}
+                    </button>
+                </div>
             </div>
         );
     });
+
 
     return (
         <div className="file">
@@ -542,6 +670,19 @@ const Cloud = ({ file, updateSelectedFile }) => {
                 )}
             </div>
 
+            {/* Transfer buttons for selected cloud files */}
+            {hasSelectedCloudFiles() && (
+                <div className="transfer-controls">
+                    <button
+                        onClick={moveToLocal}
+                        disabled={loading}
+                        className="transfer-btn download-btn"
+                    >
+                        📥 Store to Local ({getSelectedCloudFiles().length})
+                    </button>
+                </div>
+            )}
+
             <div className="search-results">
                 {loading && <div className="loading">Loading files from {activeTab === 's3' ? 'S3' : 'Dropbox'}...</div>}
                 {!loading && filteredFiles.length === 0 && searchTerm ? (
@@ -555,6 +696,51 @@ const Cloud = ({ file, updateSelectedFile }) => {
                     <div className="no-files">No files found in {activeTab === 's3' ? 'S3' : 'Dropbox'}</div>
                 )}
             </div>
+
+            {/* Conflict Resolution Alert */}
+            {showTransferAlert && (
+                <div className="alert-overlay">
+                    <div className="alert-dialog">
+                        <h4>File Conflicts</h4>
+                        <p>{alertMessage}</p>
+                        <div className="alert-buttons">
+                            <button
+                                onClick={() => {
+                                    setShowTransferAlert(false);
+                                    setConflictFiles([]);
+                                }}
+                                className="cancel-btn"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const selectedFiles = getSelectedCloudFiles();
+                                    const nonConflictFiles = selectedFiles.filter(filename => !conflictFiles.includes(filename));
+                                    if (nonConflictFiles.length > 0) {
+                                        executeLocalDownload(nonConflictFiles);
+                                    }
+                                    setShowTransferAlert(false);
+                                    setConflictFiles([]);
+                                }}
+                                className="skip-btn"
+                            >
+                                Skip Conflicts
+                            </button>
+                            <button
+                                onClick={() => {
+                                    executeLocalDownload(getSelectedCloudFiles());
+                                    setShowTransferAlert(false);
+                                    setConflictFiles([]);
+                                }}
+                                className="overwrite-btn"
+                            >
+                                Overwrite All
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

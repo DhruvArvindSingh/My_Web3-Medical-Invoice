@@ -4,11 +4,20 @@ import * as AppGeneral from "../socialcalc/AppGeneral";
 import { File, Local } from "../storage/LocalStorage.js";
 import { DATA } from "../app-data.js";
 
-const Menu = ({ file, updateSelectedFile }) => {
+const Menu = ({ file, updateSelectedFile, userLogo }) => {
   const [exportFormat, setExportFormat] = useState('');
   const storeRef = useRef(new Local(file));
 
 
+
+  const createLogoHTML = () => {
+    if (!userLogo?.url) return '';
+    return `
+      <div style="margin-bottom: 20px; text-align: left;">
+        <img src="${userLogo.url}" alt="Company Logo" style="max-width: 150px; max-height: 75px; object-fit: contain;" />
+      </div>
+    `;
+  };
 
   const doPrint = () => {
     const content = AppGeneral.getCurrentHTMLContent();
@@ -18,6 +27,8 @@ const Menu = ({ file, updateSelectedFile }) => {
       window.alert('No content to print. Please make sure your spreadsheet has data.');
       return;
     }
+
+    const logoHTML = createLogoHTML();
 
     // Try the popup approach first
     try {
@@ -35,12 +46,16 @@ const Menu = ({ file, updateSelectedFile }) => {
               body { font-family: Arial, sans-serif; margin: 20px; }
               table { border-collapse: collapse; width: 100%; }
               td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+              .logo-header { margin-bottom: 20px; }
+              .logo-header img { max-width: 150px; max-height: 75px; object-fit: contain; }
               @media print {
                 body { margin: 0; }
+                .logo-header img { max-width: 120px; max-height: 60px; }
               }
             </style>
           </head>
           <body>
+            ${logoHTML}
             ${content}
           </body>
           </html>
@@ -70,6 +85,8 @@ const Menu = ({ file, updateSelectedFile }) => {
   }
 
   const printFallback = (content) => {
+    const logoHTML = createLogoHTML();
+    
     // Create a hidden div with the content
     const printDiv = document.createElement('div');
     printDiv.innerHTML = `
@@ -80,9 +97,10 @@ const Menu = ({ file, updateSelectedFile }) => {
           .print-content { position: absolute; left: 0; top: 0; width: 100%; }
           table { border-collapse: collapse; width: 100%; }
           td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          .logo-header img { max-width: 120px; max-height: 60px; object-fit: contain; }
         }
       </style>
-      <div class="print-content">${content}</div>
+      <div class="print-content">${logoHTML}${content}</div>
     `;
     printDiv.style.display = 'none';
 
@@ -185,6 +203,8 @@ const Menu = ({ file, updateSelectedFile }) => {
         return;
       }
 
+      const logoHTML = createLogoHTML();
+
       // Create a new window for PDF generation
       const printWindow = window.open("", "_blank", "width=800,height=600");
 
@@ -201,14 +221,20 @@ const Menu = ({ file, updateSelectedFile }) => {
                 margin: 20px; 
                 color: #000;
               }
+              .logo-header { margin-bottom: 20px; }
+              .logo-header img { max-width: 150px; max-height: 75px; object-fit: contain; }
+              table { border-collapse: collapse; width: 100%; }
+              td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
               
               @media print {
                 body { margin: 0; }
                 @page { size: A4; margin: 0.5in; }
+                .logo-header img { max-width: 120px; max-height: 60px; }
               }
             </style>
           </head>
           <body>
+            ${logoHTML}
             ${content}
             <script>
               window.onload = function() {
@@ -226,7 +252,7 @@ const Menu = ({ file, updateSelectedFile }) => {
 
       } else {
         window.alert("Please allow popups for this site to export as PDF. Use your browser's print dialog to save as PDF.");
-        window.print(); src / Menu / Menu.css
+        window.print();
       }
     } catch (error) {
       console.error('PDF export error:', error);

@@ -142,6 +142,56 @@ class ApiService {
         }
     }
 
+    // Logo Operations
+    static async uploadLogo(fileName, content) {
+        try {
+            if (!fileName || typeof fileName !== 'string') {
+                throw new Error('Invalid fileName provided');
+            }
+
+            if (typeof content !== 'string') {
+                throw new Error('Invalid content provided - must be string');
+            }
+
+            const response = await apiClient.post('/api/v1/uploadLogo', {
+                fileName,
+                content
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Failed to upload logo:', error);
+            throw error;
+        }
+    }
+
+    static async deleteLogo(fileName) {
+        try {
+            if (!fileName || typeof fileName !== 'string') {
+                throw new Error('Invalid fileName provided');
+            }
+
+            const response = await apiClient.post('/api/v1/deleteLogo', {
+                fileName
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('Failed to delete logo:', error);
+            throw error;
+        }
+    }
+
+    static async getUserLogo() {
+        try {
+            const response = await apiClient.get('/api/v1/getUserLogo');
+            return response.data;
+        } catch (error) {
+            console.error('Failed to get user logo:', error);
+            throw error;
+        }
+    }
+
     // Authentication (if needed)
     static async signup(userData) {
         try {

@@ -1,6 +1,54 @@
 # CLAUDE.md
 
+## Agent Behavior Instructions
+
+### MANDATORY Handoff Process
+**Every agent MUST follow this exact workflow:**
+
+1. **Check `comms.md`** - Read "Current Step Being Executed" to see if someone is working
+2. **Wait your turn** - Only proceed if no one has "Status: In Progress" 
+3. **Write what you're doing** - Update "Current Step Being Executed" with your action
+4. **Execute ONE small step** - Make a focused, incremental change
+5. **Write what's next** - Update "Next Step Required" with specific instructions for next agent
+6. **Mark complete** - Change your status and add to Action Log
+
+### Required Format in comms.md:
+```
+### Current Step Being Executed
+**Agent**: [Frontend/Backend/Testing]
+**Executing**: [Specific task you're doing right now]
+**Status**: In Progress
+
+### Next Step Required  
+**Next Agent**: [Which agent goes next]
+**Next Task**: [Exact step they should do]
+**Why**: [Why this is the logical next step]
+```
+
+### Coordination Rules
+- **ONE agent works at a time** - never overlap
+- **Small steps only** - no big feature implementations
+- **Clear handoffs** - be specific about what's next
+- **Always update comms.md** - before and after your work
+
+### Code Quality Standards
+- Follow existing patterns
+- Add helpful comments
+- Test your changes
+- Don't break existing functionality
+
+---
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+
+## Action Logging Protocol
+- Agents are designated as Agent 1, Agent 2, or Agent 3. - Start each log entry with 'Agent X:' where X is your assigned number.
+- Describe the small step you executed.
+- Specify the very next step required.
+- Indicate the agent responsible for the next step (e.g., 'Next: Agent Y').
+- Review previous logs to ensure continuity and awareness of others' actions.
+
 
 ## Development Commands
 

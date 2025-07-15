@@ -1,0 +1,54 @@
+.logo-display {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+}
+
+.logo-display-image {
+    display: block;
+    border: none;
+    background-color: transparent;
+}
+
+/* Invoice/Document specific styles */
+.logo-display.invoice-logo {
+    margin-bottom: 20px;
+}
+
+.logo-display.invoice-logo .logo-display-image {
+    max-width: 150px;
+    max-height: 75px;
+    object-fit: contain;
+}
+
+.logo-display.header-logo {
+    margin-right: 20px;
+}
+
+.logo-display.header-logo .logo-display-image {
+    max-width: 100px;
+    max-height: 50px;
+    object-fit: contain;
+}
+
+/* Print styles for PDFs */
+@media print {
+    .logo-display-image {
+        max-width: 100px !important;
+        max-height: 50px !important;
+        object-fit: contain;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .logo-display.invoice-logo .logo-display-image {
+        max-width: 120px;
+        max-height: 60px;
+    }
+    
+    .logo-display.header-logo .logo-display-image {
+        max-width: 80px;
+        max-height: 40px;
+    }
+}
