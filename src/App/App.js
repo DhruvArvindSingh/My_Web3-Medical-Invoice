@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 import * as AppGeneral from "../socialcalc/AppGeneral";
 import { DATA } from "../app-data.js";
@@ -8,110 +8,89 @@ import Files from "../Files/Files";
 import { ConnectKitButton } from "connectkit";
 import Cloud from "../Cloud/Cloud";
 
-class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      selectedFile: "default",
-      device: AppGeneral.getDeviceType(),
-      listFiles: false,
-      cloud: false,
-    };
-    this.updateSelectedFile = this.updateSelectedFile.bind(this);
-    this.toggleListFiles = this.toggleListFiles.bind(this);
-    this.toggleCloud = this.toggleCloud.bind(this);
-  }
+const App = () => {
+  const [selectedFile, setSelectedFile] = useState("default");
+  const [device] = useState(AppGeneral.getDeviceType());
+  const [listFiles, setListFiles] = useState(false);
+  const [cloud, setCloud] = useState(false);
 
-  updateSelectedFile(selectedFile) {
-    this.setState({
-      selectedFile: selectedFile,
-    });
-  }
+  const updateSelectedFile = (selectedFile) => {
+    setSelectedFile(selectedFile);
+  };
 
-  toggleListFiles() {
-    this.setState((prevState) => ({
-      listFiles: !prevState.listFiles,
-    }));
-  }
+  const toggleListFiles = () => {
+    setListFiles(prev => !prev);
+  };
 
-  toggleCloud() {
-    this.setState((prevState) => ({
-      cloud: !prevState.cloud,
-    }));
-  }
+  const toggleCloud = () => {
+    setCloud(prev => !prev);
+  };
 
-  componentDidMount() {
-    let data = DATA["home"][this.state.device]["msc"];
+  useEffect(() => {
+    let data = DATA["home"][device]["msc"];
     AppGeneral.initializeApp(JSON.stringify(data));
-  }
+  }, [device]);
 
-  activateFooter(footer) {
-    // console.log("Button pressed! "+footer);
+  const activateFooter = (footer) => {
     AppGeneral.activateFooterButton(footer);
-  }
+  };
 
-  render() {
-    let footers = DATA["home"][this.state.device]["footers"];
+  const footers = DATA["home"][device]["footers"];
 
-    let footersList = footers.map((footerArray, i) => {
-      // console.log(footerArray.name);
-      // console.log(footerArray.index);
-      return (
-        <button
-          className="button button-outline"
-          key={footerArray.index}
-          onClick={() => this.activateFooter(footerArray.index)}
-        >
-          {" "}
-          {footerArray.name}{" "}
-        </button>
-      );
-    });
-
+  const footersList = footers.map((footerArray, i) => {
     return (
-      <div className="App">
-        <div className="App-header">
-          <span>Editing: {this.state.selectedFile} </span>
-          <span className="Connect-list">
-            <ConnectKitButton />
-          </span>
-          <button className="App-list" onClick={this.toggleCloud}>
-            Cloud
-          </button>
-          <button className="App-list" onClick={this.toggleListFiles}>
-            List Files{" "}
-          </button>
-        </div>
-        <div className="App-menu">
-          {" "}
-          <Menu
-            file={this.state.selectedFile}
-            updateSelectedFile={this.updateSelectedFile}
-          />{" "}
-        </div>
-        <ul className="App-footers"> {footersList} </ul>
-        <div id="workbookControl"></div>
-        <div id="tableeditor">editor goes here</div>
-        <div id="msg"></div>
-        {this.state.listFiles ? (
-          <div className="App-files">
-            <Files
-              file={this.state.selectedFile}
-              updateSelectedFile={this.updateSelectedFile}
-            />{" "}
-          </div>
-        ) : null}
-        {this.state.cloud ? (
-          <div className="App-cloud">
-            <Cloud
-              file={this.state.selectedFile}
-              updateSelectedFile={this.updateSelectedFile}
-            />
-          </div>
-        ) : null}
-      </div>
+      <button
+        className="button button-outline"
+        key={footerArray.index}
+        onClick={() => activateFooter(footerArray.index)}
+      >
+        {footerArray.name}
+      </button>
     );
-  }
-}
+  });
+
+  return (
+    <div className="App">
+      <div className="App-header">
+        <span>Editing: {selectedFile} </span>
+        <span className="Connect-list">
+          <ConnectKitButton />
+        </span>
+        <button className="App-list" onClick={toggleCloud}>
+          Cloud
+        </button>
+        <button className="App-list" onClick={toggleListFiles}>
+          List Files
+        </button>
+      </div>
+      <div className="App-menu">
+        <Menu
+          file={selectedFile}
+          updateSelectedFile={updateSelectedFile}
+        />
+      </div>
+      <ul className="App-footers"> {footersList} </ul>
+      <div id="workbookControl"></div>
+      <div id="tableeditor">editor goes here</div>
+      <div id="msg"></div>
+      {listFiles && (
+        <div className="App-files">
+          <Files
+            file={selectedFile}
+            updateSelectedFile={updateSelectedFile}
+          />
+        </div>
+      )}
+      {cloud && (
+        <div className="App-cloud">
+          <Cloud
+            file={selectedFile}
+            updateSelectedFile={updateSelectedFile}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default App;

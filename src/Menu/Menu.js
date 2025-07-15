@@ -1,21 +1,16 @@
-import React, { Component } from "react";
+import React, { useState, useRef } from "react";
 import "./Menu.css";
 import * as AppGeneral from "../socialcalc/AppGeneral";
 import { File, Local } from "../storage/LocalStorage.js";
 import { DATA } from "../app-data.js";
 
-class Menu extends Component {
-  constructor(props) {
-    super(props);
-    this.store = new Local(this.props.file);
-    this.state = {
-      exportFormat: '' // default to
-    };
-  }
+const Menu = ({ file, updateSelectedFile }) => {
+  const [exportFormat, setExportFormat] = useState('');
+  const storeRef = useRef(new Local(file));
 
 
 
-  doPrint() {
+  const doPrint = () => {
     const content = AppGeneral.getCurrentHTMLContent();
 
     // Check if content exists
@@ -74,7 +69,7 @@ class Menu extends Component {
     }
   }
 
-  printFallback(content) {
+  const printFallback = (content) => {
     // Create a hidden div with the content
     const printDiv = document.createElement('div');
     printDiv.innerHTML = `
@@ -104,89 +99,84 @@ class Menu extends Component {
     }, 1000);
   }
 
-  doSave() {
-    if (this.props.file === "default") {
-      window.alert(`Cannot update ${this.props.file} file! `);
+  const doSave = () => {
+    if (file === "default") {
+      window.alert(`Cannot update ${file} file! `);
       return;
     }
     const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
-    const data = this.store._getFile(this.props.file);
-    const file = new File(
+    const data = storeRef.current._getFile(file);
+    const fileObj = new File(
       data.created,
       new Date().toString(),
       content,
-      this.props.file
+      file
     );
-    this.store._saveFile(file);
-    this.props.updateSelectedFile(this.props.file);
-    window.alert(`File ${this.props.file} updated successfully! `);
-  }
+    storeRef.current._saveFile(fileObj);
+    updateSelectedFile(file);
+    window.alert(`File ${file} updated successfully! `);
+  };
 
-  doSaveAs() {
+  const doSaveAs = (event) => {
     event.preventDefault();
     const filename = window.prompt("Enter filename : ");
     if (filename) {
-      if (this._validateName(filename)) {
-        // filename valid . go on save
+      if (validateName(filename)) {
         const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
-        // console.log(content);
-        const file = new File(
+        const fileObj = new File(
           new Date().toString(),
           new Date().toString(),
           content,
           filename
         );
-        // const data = { created: file.created, modified: file.modified, content: file.content, password: file.password };
-        // console.log(JSON.stringify(data));
-        this.store._saveFile(file);
-        this.props.updateSelectedFile(filename);
+        storeRef.current._saveFile(fileObj);
+        updateSelectedFile(filename);
         window.alert(`File ${filename} saved successfully! `);
       } else {
-        window.alert(`Filename cannot be ${this.props.file}`);
+        window.alert(`Filename cannot be ${file}`);
       }
     }
-  }
+  };
 
-  newFile() {
-    if (this.props.file !== "default") {
+  const newFile = () => {
+    if (file !== "default") {
       const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
-      const data = this.store._getFile(this.props.file);
-      const file = new File(
+      const data = storeRef.current._getFile(file);
+      const fileObj = new File(
         data.created,
         new Date().toString(),
         content,
-        this.props.file
+        file
       );
-      this.store._saveFile(file);
-      this.props.updateSelectedFile(this.props.file);
+      storeRef.current._saveFile(fileObj);
+      updateSelectedFile(file);
     }
     const msc = DATA["home"][AppGeneral.getDeviceType()]["msc"];
     AppGeneral.viewFile("default", JSON.stringify(msc));
-    this.props.updateSelectedFile("default");
-  }
+    updateSelectedFile("default");
+  };
 
-  handleExportChange = (event) => {
+  const handleExportChange = (event) => {
     const format = event.target.value;
     event.target.value = '';
-    this.setState({ exportFormat: format });
+    setExportFormat(format);
 
     if (format !== '') {
-      const filename = this.props.file !== 'default' ? this.props.file : 'spreadsheet';
+      const filename = file !== 'default' ? file : 'spreadsheet';
 
       if (format === 'pdf') {
-        this.exportAsPDF(filename);
+        exportAsPDF(filename);
       } else if (format === 'csv') {
-        this.exportAsCSV(filename);
+        exportAsCSV(filename);
       }
 
-      // Reset the select to default after export
       setTimeout(() => {
-        this.setState({ exportFormat: '' });
+        setExportFormat('');
       }, 100);
     }
-  }
+  };
 
-  exportAsPDF(filename) {
+  const exportAsPDF = (filename) => {
     try {
       const content = AppGeneral.getCurrentHTMLContent();
 
@@ -244,7 +234,7 @@ class Menu extends Component {
     }
   }
 
-  exportAsCSV(filename) {
+  const exportAsCSV = (filename) => {
     try {
       const csvContent = AppGeneral.getCSVContent();
 
@@ -276,54 +266,45 @@ class Menu extends Component {
     }
   }
 
-  render() {
-    const { exportFormat } = this.state;
-
-    return (
-      <div className="Menu">
-        <button onClick={() => this.doSave()}> Save </button>
-        <button onClick={() => this.doSaveAs()}> Save As </button>
-        <button onClick={() => this.doPrint()}> Print </button>
-        <button onClick={() => this.newFile()}> New File </button>
-        <select
-          value={exportFormat}
-          onChange={this.handleExportChange}
-          className="export-select"
-        >
-          <option value="">Export As...</option>
-          <option value="pdf">Export as PDF</option>
-          <option value="csv">Export as CSV</option>
-        </select>
-      </div>
-    );
-  }
-
-  /* Utility functions */
-  _validateName(filename) {
+  const validateName = (filename) => {
     filename = filename.trim();
     if (filename === "default" || filename === "Untitled") {
-      // return 'Cannot update default file!';
       return false;
     } else if (filename === "" || !filename) {
-      // this.showToast('Filename cannot be empty');
       return false;
     } else if (filename.length > 30) {
-      // this.showToast('Filename too long');
       return false;
     } else if (/^[a-zA-Z0-9- ]*$/.test(filename) === false) {
-      // this.showToast('Special Characters cannot be used');
       return false;
     }
     return true;
-  }
+  };
 
-  _formatString(filename) {
-    /* Remove whitespaces */
+  const formatString = (filename) => {
     while (filename.indexOf(" ") !== -1) {
       filename = filename.replace(" ", "");
     }
     return filename;
-  }
-}
+  };
+
+  return (
+    <div className="Menu">
+      <button onClick={doSave}> Save </button>
+      <button onClick={doSaveAs}> Save As </button>
+      <button onClick={doPrint}> Print </button>
+      <button onClick={newFile}> New File </button>
+      <select
+        value={exportFormat}
+        onChange={handleExportChange}
+        className="export-select"
+      >
+        <option value="">Export As...</option>
+        <option value="pdf">Export as PDF</option>
+        <option value="csv">Export as CSV</option>
+      </select>
+    </div>
+  );
+
+};
 
 export default Menu;

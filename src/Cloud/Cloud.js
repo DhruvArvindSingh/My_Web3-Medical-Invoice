@@ -1,59 +1,49 @@
-import React, { Component, useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import './Cloud.css';
 import * as AppGeneral from '../socialcalc/AppGeneral';
 import { Local } from '../storage/LocalStorage.js';
 import { DATA } from '../app-data.js';
 import ApiService from '../services/ApiService';
 
-class Cloud extends Component {
-    constructor(props) {
-        super(props);
-        this.localStore = new Local();
-        this.state = {
-            activeTab: 's3', // 's3' or 'dropbox'
-            s3Files: {},
-            dropboxFiles: {},
-            searchTerm: '',
-            loading: false,
-            uploadFile: null,
-            exportFormat: ''
-        }
-    }
+const Cloud = ({ file, updateSelectedFile }) => {
+    const localStoreRef = useRef(new Local());
+    const [activeTab, setActiveTab] = useState('s3');
+    const [s3Files, setS3Files] = useState({});
+    const [dropboxFiles, setDropboxFiles] = useState({});
+    const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [uploadFile, setUploadFile] = useState(null);
+    const [exportFormat, setExportFormat] = useState('');
 
-    componentDidMount() {
-        this.loadFiles();
-    }
-
-    // Load files based on active tab
-    loadFiles = async () => {
-        if (this.state.activeTab === 's3') {
-            await this.loadFilesFromS3();
+    const loadFiles = async () => {
+        if (activeTab === 's3') {
+            await loadFilesFromS3();
         } else {
-            await this.loadFilesFromDropbox();
+            await loadFilesFromDropbox();
         }
     };
 
-    // Switch tab handler
-    switchTab = async (tab) => {
-        this.setState({ activeTab: tab });
+    useEffect(() => {
+        loadFiles();
+    }, [activeTab]);
 
-        // Load files for the new tab if not already loaded
-        if (tab === 's3' && Object.keys(this.state.s3Files).length === 0) {
-            await this.loadFilesFromS3();
-        } else if (tab === 'dropbox' && Object.keys(this.state.dropboxFiles).length === 0) {
-            await this.loadFilesFromDropbox();
+    const switchTab = async (tab) => {
+        setActiveTab(tab);
+
+        if (tab === 's3' && Object.keys(s3Files).length === 0) {
+            await loadFilesFromS3();
+        } else if (tab === 'dropbox' && Object.keys(dropboxFiles).length === 0) {
+            await loadFilesFromDropbox();
         }
     };
 
-    // Get current files based on active tab
-    getCurrentFiles = () => {
-        return this.state.activeTab === 's3' ? this.state.s3Files : this.state.dropboxFiles;
+    const getCurrentFiles = () => {
+        return activeTab === 's3' ? s3Files : dropboxFiles;
     };
 
-    // Test API connection
-    testConnection = async () => {
+    const testConnection = async () => {
         try {
-            if (this.state.activeTab === 's3') {
+            if (activeTab === 's3') {
                 await ApiService.listAllS3();
                 alert("S3 connection successful!");
             } else {
@@ -66,18 +56,17 @@ class Cloud extends Component {
             if (err.response?.status === 401) {
                 alert("Authentication failed. Please login and try again.");
             } else {
-                const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+                const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
                 alert(`${provider} connection failed. Please check your configuration.`);
             }
             return false;
         }
     };
 
-    // Test file download
-    testFileDownload = async () => {
-        const files = Object.keys(this.getCurrentFiles());
+    const testFileDownload = async () => {
+        const files = Object.keys(getCurrentFiles());
         if (files.length === 0) {
-            const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+            const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
             alert(`No files available in ${provider} to test download.`);
             return;
         }
@@ -86,9 +75,9 @@ class Cloud extends Component {
         console.log("Testing download of file:", testFileName);
 
         try {
-            const fileData = this.state.activeTab === 's3'
-                ? await this.getFileFromS3(testFileName)
-                : await this.getFileFromDropbox(testFileName);
+            const fileData = activeTab === 's3'
+                ? await getFileFromS3(testFileName)
+                : await getFileFromDropbox(testFileName);
 
             if (fileData && fileData.content) {
                 alert(`Successfully downloaded "${testFileName}" (${fileData.content.length} characters)`);
@@ -100,24 +89,20 @@ class Cloud extends Component {
         }
     };
 
-    // Load all files from S3 bucket
-    loadFilesFromS3 = async () => {
-        this.setState({ loading: true });
+    const loadFilesFromS3 = async () => {
+        setLoading(true);
         try {
             const response = await ApiService.listAllS3();
-
-
-
-            this.setState({ s3Files: response.s3Files, loading: false });
+            setS3Files(response.s3Files);
         } catch (err) {
             console.error("Failed to load files from S3", err);
             alert("Failed to load files from S3. Please check your authentication and try again.");
-            this.setState({ loading: false });
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Get file content from S3
-    getFileFromS3 = async (key) => {
+    const getFileFromS3 = async (key) => {
         try {
             console.log("Getting file from S3 via API:", key);
             const response = await ApiService.getFileS3(key);
@@ -125,13 +110,11 @@ class Cloud extends Component {
             console.log("Response type:", typeof response);
             console.log("Response keys:", Object.keys(response));
 
-            // Check if we have content in the response
             if (!response) {
                 console.error("No response received from S3 API");
                 throw new Error("No response received from S3 API");
             }
 
-            // Handle different possible response formats
             let content = null;
             if (response.content !== undefined) {
                 content = response.content;
@@ -154,8 +137,8 @@ class Cloud extends Component {
 
             return {
                 content: content,
-                modified: this.state.s3Files[key] || Date.now(),
-                created: this.state.s3Files[key] || Date.now()
+                modified: s3Files[key] || Date.now(),
+                created: s3Files[key] || Date.now()
             };
         } catch (err) {
             console.error("Failed to get file from S3", err);
@@ -176,16 +159,13 @@ class Cloud extends Component {
         }
     };
 
-    // Save file to S3
-    saveFileToS3 = async (fileName, content) => {
+    const saveFileToS3 = async (fileName, content) => {
         console.log("fileName", fileName);
         console.log("content", content);
         try {
             const response = await ApiService.uploadFileS3(fileName, content);
             console.log("response", response);
-
-            // Refresh file list after successful upload
-            await this.loadFiles();
+            await loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to save file to S3", err);
@@ -198,13 +178,10 @@ class Cloud extends Component {
         }
     };
 
-    // Delete file from S3
-    deleteFileFromS3 = async (key) => {
+    const deleteFileFromS3 = async (key) => {
         try {
             await ApiService.deleteFileS3(key);
-
-            // Refresh file list after successful deletion
-            await this.loadFiles();
+            await loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to delete file from S3", err);
@@ -219,15 +196,12 @@ class Cloud extends Component {
         }
     };
 
-    // Load all files from Dropbox
-    loadFilesFromDropbox = async () => {
-        this.setState({ loading: true });
+    const loadFilesFromDropbox = async () => {
+        setLoading(true);
         try {
             const response = await ApiService.listAllDropbox();
             console.log("response", response);
-
-
-            this.setState({ dropboxFiles: response.dropboxFiles, loading: false });
+            setDropboxFiles(response.dropboxFiles);
         } catch (err) {
             console.error("Failed to load files from Dropbox", err);
             if (err.response?.status === 401) {
@@ -235,12 +209,12 @@ class Cloud extends Component {
             } else {
                 alert("Failed to load files from Dropbox. Please check your authentication and try again.");
             }
-            this.setState({ loading: false });
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Get file content from Dropbox
-    getFileFromDropbox = async (fileName) => {
+    const getFileFromDropbox = async (fileName) => {
         try {
             console.log("Getting file from Dropbox via API:", fileName);
             const response = await ApiService.getFileDropbox(fileName);
@@ -248,13 +222,11 @@ class Cloud extends Component {
             console.log("Response type:", typeof response);
             console.log("Response keys:", Object.keys(response));
 
-            // Check if we have content in the response
             if (!response) {
                 console.error("No response received from Dropbox API");
                 throw new Error("No response received from Dropbox API");
             }
 
-            // Handle different possible response formats
             let content = null;
             if (response.content !== undefined) {
                 content = response.content;
@@ -277,8 +249,8 @@ class Cloud extends Component {
 
             return {
                 content: content,
-                modified: this.state.dropboxFiles[fileName] || Date.now(),
-                created: this.state.dropboxFiles[fileName] || Date.now()
+                modified: dropboxFiles[fileName] || Date.now(),
+                created: dropboxFiles[fileName] || Date.now()
             };
         } catch (err) {
             console.error("Failed to get file from Dropbox", err);
@@ -301,16 +273,13 @@ class Cloud extends Component {
         }
     };
 
-    // Save file to Dropbox
-    saveFileToDropbox = async (fileName, content) => {
+    const saveFileToDropbox = async (fileName, content) => {
         console.log("fileName", fileName);
         console.log("content", content);
 
         try {
             await ApiService.uploadFileDropbox(fileName, content);
-
-            // Refresh file list after successful upload
-            await this.loadFiles();
+            await loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to save file to Dropbox", err);
@@ -328,13 +297,10 @@ class Cloud extends Component {
         }
     };
 
-    // Delete file from Dropbox
-    deleteFileFromDropbox = async (fileName) => {
+    const deleteFileFromDropbox = async (fileName) => {
         try {
             await ApiService.deleteFileDropbox(fileName);
-
-            // Refresh file list after successful deletion
-            await this.loadFiles();
+            await loadFiles();
             return true;
         } catch (err) {
             console.error("Failed to delete file from Dropbox", err);
@@ -349,12 +315,11 @@ class Cloud extends Component {
         }
     };
 
-    // Upload current invoice data to active cloud provider
-    uploadCurrentInvoice = async () => {
+    const uploadCurrentInvoice = async () => {
         const fileName = prompt("Enter filename for the current invoice (without extension):");
 
         if (!fileName) {
-            return; // User cancelled
+            return;
         }
 
         if (fileName.trim() === '') {
@@ -362,22 +327,18 @@ class Cloud extends Component {
             return;
         }
 
-        this.setState({ loading: true });
+        setLoading(true);
 
         try {
-            // Get current spreadsheet content
             const currentData = AppGeneral.getSpreadsheetContent();
-
-            // Create filename with .txt extension
             const fullFileName = `${fileName.trim()}.txt`;
 
-            // Save to active cloud provider
-            const success = this.state.activeTab === 's3'
-                ? await this.saveFileToS3(fullFileName, currentData)
-                : await this.saveFileToDropbox(fullFileName, currentData);
+            const success = activeTab === 's3'
+                ? await saveFileToS3(fullFileName, currentData)
+                : await saveFileToDropbox(fullFileName, currentData);
 
             if (success) {
-                const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+                const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
                 alert(`Current invoice saved successfully to ${provider} as "${fullFileName}"`);
             } else {
                 alert("Failed to save current invoice to cloud storage");
@@ -387,77 +348,73 @@ class Cloud extends Component {
             alert("Failed to get current invoice data");
         }
 
-        this.setState({ loading: false });
+        setLoading(false);
     };
 
-    // Edit file - loads from active cloud provider
-    editFile = async (key) => {
-        this.setState({ loading: true });
+    const editFile = async (key) => {
+        setLoading(true);
 
         try {
-            console.log("Editing file:", key, "from provider:", this.state.activeTab);
+            console.log("Editing file:", key, "from provider:", activeTab);
 
-            const fileData = this.state.activeTab === 's3'
-                ? await this.getFileFromS3(key)
-                : await this.getFileFromDropbox(key);
+            const fileData = activeTab === 's3'
+                ? await getFileFromS3(key)
+                : await getFileFromDropbox(key);
 
             if (fileData && fileData.content) {
                 console.log("File loaded successfully, content length:", fileData.content.length);
                 AppGeneral.viewFile(key, fileData.content);
-                this.props.updateSelectedFile(key);
+                updateSelectedFile(key);
             } else {
-                const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+                const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
                 alert(`Failed to load file from ${provider}. The file may be empty or corrupted.`);
             }
         } catch (err) {
             console.error("Error loading file:", err);
-            const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+            const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
             alert(`Failed to load file from ${provider}. Please check the console for details.`);
+        } finally {
+            setLoading(false);
         }
-
-        this.setState({ loading: false });
     };
 
-    // Delete file - deletes from active cloud provider
-    deleteFile = async (key) => {
+    const deleteFile = async (key, event) => {
         event.preventDefault();
-        const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+        const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
         const result = window.confirm(`Do you want to delete the ${key} file from ${provider}?`);
 
         if (result) {
-            this.setState({ loading: true });
-            const success = this.state.activeTab === 's3'
-                ? await this.deleteFileFromS3(key)
-                : await this.deleteFileFromDropbox(key);
+            setLoading(true);
+            const success = activeTab === 's3'
+                ? await deleteFileFromS3(key)
+                : await deleteFileFromDropbox(key);
 
             if (success) {
-                this.loadDefault();
+                loadDefault();
                 alert(`File deleted successfully from ${provider}`);
             } else {
                 alert(`Failed to delete file from ${provider}`);
             }
 
-            this.setState({ loading: false });
+            setLoading(false);
         }
     };
 
-    // Upload new file to active cloud provider
-    uploadFile = async () => {
-        const { uploadFile } = this.state;
+    const handleUploadFile = async () => {
         if (!uploadFile) return alert("Select a file first");
 
-        this.setState({ loading: true });
+        setLoading(true);
 
         try {
             const content = await uploadFile.text();
-            const success = this.state.activeTab === 's3'
-                ? await this.saveFileToS3(uploadFile.name, content)
-                : await this.saveFileToDropbox(uploadFile.name, content);
+            const success = activeTab === 's3'
+                ? await saveFileToS3(uploadFile.name, content)
+                : await saveFileToDropbox(uploadFile.name, content);
 
             if (success) {
-                const provider = this.state.activeTab === 's3' ? 'S3' : 'Dropbox';
+                const provider = activeTab === 's3' ? 'S3' : 'Dropbox';
                 alert(`File uploaded successfully to ${provider}`);
-                this.setState({ uploadFile: null });
+                setUploadFile(null);
             } else {
                 alert("Failed to upload file to cloud storage");
             }
@@ -466,146 +423,140 @@ class Cloud extends Component {
             alert("Failed to read file");
         }
 
-        this.setState({ loading: false });
+        setLoading(false);
     };
 
-    loadDefault() {
+    const loadDefault = () => {
         const msc = DATA['home'][AppGeneral.getDeviceType()]['msc'];
         AppGeneral.viewFile('default', JSON.stringify(msc));
-        this.props.updateSelectedFile('default');
-    }
+        updateSelectedFile('default');
+    };
 
-    handleSearchChange = (event) => {
-        this.setState({ searchTerm: event.target.value });
-    }
+    const handleSearchChange = (event) => {
+        setSearchTerm(event.target.value);
+    };
 
-    clearSearch = () => {
-        this.setState({ searchTerm: '' });
-    }
+    const clearSearch = () => {
+        setSearchTerm('');
+    };
 
-    handleExportChange = (event) => {
+    const handleExportChange = (event) => {
         const format = event.target.value;
-        this.setState({ exportFormat: '' }); // Reset the select
+        setExportFormat('');
 
         if (format === 'this') {
-            this.uploadCurrentInvoice();
+            uploadCurrentInvoice();
         }
-    }
+    };
 
-    render() {
-        const { activeTab, searchTerm, loading, uploadFile, exportFormat } = this.state;
-        const files = this.getCurrentFiles();
+    const formatDate = (timestamp) => {
+        return new Date(timestamp).toLocaleString();
+    };
 
-        // Filter files based on search term
-        const filteredFiles = Object.keys(files).filter(key =>
-            key.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+    const files = getCurrentFiles();
+    const filteredFiles = Object.keys(files).filter(key =>
+        key.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-        let fileList = filteredFiles.map(key => {
-            return (
-                <div key={key}>
-                    <li>{key} <span>{this._formatDate(files[key])}</span></li>
-                    <button
-                        onClick={() => { this.editFile(key) }}
-                        disabled={loading}
-                    >
-                        {loading ? 'Loading...' : 'Edit'}
-                    </button>
-                    <button
-                        onClick={() => { this.deleteFile(key) }}
-                        disabled={loading}
-                    >
-                        {loading ? 'Deleting...' : 'Delete'}
-                    </button>
-                </div>
-            );
-        });
-
+    const fileList = filteredFiles.map(key => {
         return (
-            <div className="file">
-                {/* Tab Navigation */}
-                <div className="tab-navigation">
-                    <button
-                        className={`tab-button ${activeTab === 's3' ? 'active' : ''}`}
-                        onClick={() => this.switchTab('s3')}
-                        disabled={loading}
-                    >
-                        🗄️ S3
-                    </button>
-                    <button
-                        className={`tab-button ${activeTab === 'dropbox' ? 'active' : ''}`}
-                        onClick={() => this.switchTab('dropbox')}
-                        disabled={loading}
-                    >
-                        📦 Dropbox
-                    </button>
-                    <button
-                        className="test-connection-btn"
-                        onClick={this.testConnection}
-                        disabled={loading}
-                        title={`Test ${activeTab === 's3' ? 'S3' : 'Dropbox'} Connection`}
-                    >
-                        🔧 Test Connection
-                    </button>
-                    <button
-                        className="test-download-btn"
-                        onClick={this.testFileDownload}
-                        disabled={loading}
-                        title="Test File Download"
-                    >
-                        📥 Test Download
-                    </button>
-                </div>
-
-                <div className="search-container">
-                    <select
-                        value={exportFormat}
-                        onChange={this.handleExportChange}
-                        className="export-select"
-                        disabled={loading}
-                    >
-                        <option value="">📤 Upload...</option>
-                        <option value="this">💾 Upload Current Invoice</option>
-                    </select>
-
-                    <input
-                        type="text"
-                        placeholder="Search files..."
-                        value={searchTerm}
-                        onChange={this.handleSearchChange}
-                        className="search-input"
-                    />
-                    {searchTerm && (
-                        <button
-                            onClick={this.clearSearch}
-                            className="clear-search-btn"
-                            title="Clear search"
-                        >
-                            ×
-                        </button>
-                    )}
-                </div>
-
-                <div className="search-results">
-                    {loading && <div className="loading">Loading files from {activeTab === 's3' ? 'S3' : 'Dropbox'}...</div>}
-                    {!loading && filteredFiles.length === 0 && searchTerm ? (
-                        <div className="no-results">No files found matching "{searchTerm}"</div>
-                    ) : (
-                        <ul>
-                            {fileList}
-                        </ul>
-                    )}
-                    {!loading && Object.keys(files).length === 0 && !searchTerm && (
-                        <div className="no-files">No files found in {activeTab === 's3' ? 'S3' : 'Dropbox'}</div>
-                    )}
-                </div>
+            <div key={key}>
+                <li>{key} <span>{formatDate(files[key])}</span></li>
+                <button
+                    onClick={() => editFile(key)}
+                    disabled={loading}
+                >
+                    {loading ? 'Loading...' : 'Edit'}
+                </button>
+                <button
+                    onClick={(event) => deleteFile(key, event)}
+                    disabled={loading}
+                >
+                    {loading ? 'Deleting...' : 'Delete'}
+                </button>
             </div>
         );
-    }
+    });
 
-    _formatDate(timestamp) {
-        return new Date(timestamp).toLocaleString();
-    }
-}
+    return (
+        <div className="file">
+            <div className="tab-navigation">
+                <button
+                    className={`tab-button ${activeTab === 's3' ? 'active' : ''}`}
+                    onClick={() => switchTab('s3')}
+                    disabled={loading}
+                >
+                    🗄️ S3
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'dropbox' ? 'active' : ''}`}
+                    onClick={() => switchTab('dropbox')}
+                    disabled={loading}
+                >
+                    📦 Dropbox
+                </button>
+                <button
+                    className="test-connection-btn"
+                    onClick={testConnection}
+                    disabled={loading}
+                    title={`Test ${activeTab === 's3' ? 'S3' : 'Dropbox'} Connection`}
+                >
+                    🔧 Test Connection
+                </button>
+                <button
+                    className="test-download-btn"
+                    onClick={testFileDownload}
+                    disabled={loading}
+                    title="Test File Download"
+                >
+                    📥 Test Download
+                </button>
+            </div>
+
+            <div className="search-container">
+                <select
+                    value={exportFormat}
+                    onChange={handleExportChange}
+                    className="export-select"
+                    disabled={loading}
+                >
+                    <option value="">📤 Upload...</option>
+                    <option value="this">💾 Upload Current Invoice</option>
+                </select>
+
+                <input
+                    type="text"
+                    placeholder="Search files..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="search-input"
+                />
+                {searchTerm && (
+                    <button
+                        onClick={clearSearch}
+                        className="clear-search-btn"
+                        title="Clear search"
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
+
+            <div className="search-results">
+                {loading && <div className="loading">Loading files from {activeTab === 's3' ? 'S3' : 'Dropbox'}...</div>}
+                {!loading && filteredFiles.length === 0 && searchTerm ? (
+                    <div className="no-results">No files found matching "{searchTerm}"</div>
+                ) : (
+                    <ul>
+                        {fileList}
+                    </ul>
+                )}
+                {!loading && Object.keys(files).length === 0 && !searchTerm && (
+                    <div className="no-files">No files found in {activeTab === 's3' ? 'S3' : 'Dropbox'}</div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 export default Cloud;
