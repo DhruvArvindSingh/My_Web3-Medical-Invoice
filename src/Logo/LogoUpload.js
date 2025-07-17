@@ -1,6 +1,8 @@
 import React, { useState, useRef } from 'react';
 import ApiService from '../services/ApiService';
 import './LogoUpload.css';
+import * as AppGeneral from '../socialcalc/AppGeneral';
+import { LOGO } from '../app-data';
 
 const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
     const [isUploading, setIsUploading] = useState(false);
@@ -62,7 +64,7 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
 
         try {
             const base64String = await convertFileToBase64(file);
-            
+
             const timestamp = Date.now();
             const fileExtension = file.name.split('.').pop();
             const fileName = `logo_${timestamp}.${fileExtension}`;
@@ -83,17 +85,23 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
             clearInterval(progressInterval);
             setUploadProgress(100);
 
-            if (response.success) {
-                const logoData = {
-                    url: response.data.url,
-                    fileName: fileName
-                };
-                setUserLogo(logoData);
-                if (onLogoChange) {
-                    onLogoChange(logoData);
+            if (response.success && response.data.signedUrl) {
+                // setLoadingMessage("Adding logo to spreadsheet...");
+
+                // Use the signed URL instead of the base64 data
+                if (AppGeneral.addLogo) {
+                    const deviceType = AppGeneral.getDeviceType ? AppGeneral.getDeviceType() : "default";
+                    await AppGeneral.addLogo(LOGO[`${deviceType}`], response.data.signedUrl);
+                    // setToastMessage("Logo added successfully");
+                    // setShowToast1(true);
+                } else {
+                    // Fallback: Store logo URL in localStorage for future use
+                    localStorage.setItem('spreadsheet_logo_url', response.data.signedUrl);
+                    setToastMessage("Logo uploaded successfully. Please refresh to see changes.");
+                    setShowToast1(true);
                 }
             } else {
-                throw new Error(response.message || 'Upload failed');
+                throw new Error(response.message || 'Failed to upload logo');
             }
 
         } catch (error) {
@@ -156,9 +164,9 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
             <div className="logo-display-area">
                 {userLogo?.url ? (
                     <div className="logo-preview">
-                        <img 
-                            src={userLogo.url} 
-                            alt="Company Logo" 
+                        <img
+                            src={userLogo.url}
+                            alt="Company Logo"
                             className="logo-image"
                             onError={() => {
                                 setUserLogo(null);
@@ -166,14 +174,14 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
                             }}
                         />
                         <div className="logo-actions">
-                            <button 
+                            <button
                                 className="logo-btn logo-btn-primary"
                                 onClick={triggerFileInput}
                                 disabled={isUploading}
                             >
                                 Change
                             </button>
-                            <button 
+                            <button
                                 className="logo-btn logo-btn-danger"
                                 onClick={handleRemoveLogo}
                                 disabled={isUploading}
@@ -186,7 +194,7 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
                     <div className="logo-placeholder">
                         <div className="logo-placeholder-icon">📷</div>
                         <p>No logo uploaded</p>
-                        <button 
+                        <button
                             className="logo-btn logo-btn-primary"
                             onClick={triggerFileInput}
                             disabled={isUploading}
@@ -200,8 +208,8 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
             {isUploading && (
                 <div className="upload-progress">
                     <div className="progress-bar">
-                        <div 
-                            className="progress-fill" 
+                        <div
+                            className="progress-fill"
                             style={{ width: `${uploadProgress}%` }}
                         ></div>
                     </div>
@@ -212,7 +220,7 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
             {error && (
                 <div className="error-message">
                     <span>⚠️ {error}</span>
-                    <button 
+                    <button
                         className="error-close"
                         onClick={() => setError(null)}
                     >
@@ -227,13 +235,13 @@ const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
                         <h3>Remove Logo</h3>
                         <p>Are you sure you want to remove your company logo?</p>
                         <div className="delete-confirm-actions">
-                            <button 
+                            <button
                                 className="logo-btn logo-btn-secondary"
                                 onClick={cancelRemoveLogo}
                             >
                                 Cancel
                             </button>
-                            <button 
+                            <button
                                 className="logo-btn logo-btn-danger"
                                 onClick={confirmRemoveLogo}
                             >

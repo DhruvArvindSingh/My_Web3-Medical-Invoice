@@ -80,3 +80,8 @@ button {
   margin-left: 5px;
   margin-right: 5px;
 }
+
+.App-list.active {
+  background-color: #9b4dca;
+  color: white;
+}

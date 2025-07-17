@@ -8,30 +8,30 @@ import Files from "../Files/Files";
 import { ConnectKitButton } from "connectkit";
 import Cloud from "../Cloud/Cloud";
 import LogoUpload from "../Logo/LogoUpload";
+import Login from "../components/Login/Login";
 import ApiService from "../services/ApiService";
+import { PopupProvider, usePopup } from "../context/PopupContext";
 
-const App = () => {
+const AppContent = () => {
   const [selectedFile, setSelectedFile] = useState("default");
   const [device] = useState(AppGeneral.getDeviceType());
-  const [listFiles, setListFiles] = useState(false);
-  const [cloud, setCloud] = useState(false);
-  const [showLogo, setShowLogo] = useState(false);
   const [userLogo, setUserLogo] = useState(null);
+  const { togglePopup, isPopupActive } = usePopup();
 
   const updateSelectedFile = (selectedFile) => {
     setSelectedFile(selectedFile);
   };
 
-  const toggleListFiles = () => {
-    setListFiles(prev => !prev);
+  const handleToggleListFiles = () => {
+    togglePopup('listFiles');
   };
 
-  const toggleCloud = () => {
-    setCloud(prev => !prev);
+  const handleToggleCloud = () => {
+    togglePopup('cloud');
   };
 
-  const toggleLogo = () => {
-    setShowLogo(prev => !prev);
+  const handleToggleLogo = () => {
+    togglePopup('logo');
   };
 
   const handleLogoChange = (logoData) => {
@@ -83,13 +83,23 @@ const App = () => {
         <span className="Connect-list">
           <ConnectKitButton />
         </span>
-        <button className="App-list" onClick={toggleCloud}>
+        <Login />
+        <button 
+          className={`App-list ${isPopupActive('cloud') ? 'active' : ''}`} 
+          onClick={handleToggleCloud}
+        >
           Cloud
         </button>
-        <button className="App-list" onClick={toggleListFiles}>
+        <button 
+          className={`App-list ${isPopupActive('listFiles') ? 'active' : ''}`} 
+          onClick={handleToggleListFiles}
+        >
           List Files
         </button>
-        <button className="App-list" onClick={toggleLogo}>
+        <button 
+          className={`App-list ${isPopupActive('logo') ? 'active' : ''}`} 
+          onClick={handleToggleLogo}
+        >
           Logo
         </button>
       </div>
@@ -104,7 +114,7 @@ const App = () => {
       <div id="workbookControl"></div>
       <div id="tableeditor">editor goes here</div>
       <div id="msg"></div>
-      {listFiles && (
+      {isPopupActive('listFiles') && (
         <div className="App-files">
           <Files
             file={selectedFile}
@@ -112,7 +122,7 @@ const App = () => {
           />
         </div>
       )}
-      {cloud && (
+      {isPopupActive('cloud') && (
         <div className="App-cloud">
           <Cloud
             file={selectedFile}
@@ -120,7 +130,7 @@ const App = () => {
           />
         </div>
       )}
-      {showLogo && (
+      {isPopupActive('logo') && (
         <div className="App-logo">
           <LogoUpload
             userLogo={userLogo}
@@ -130,6 +140,14 @@ const App = () => {
         </div>
       )}
     </div>
+  );
+};
+
+const App = () => {
+  return (
+    <PopupProvider>
+      <AppContent />
+    </PopupProvider>
   );
 };
 
