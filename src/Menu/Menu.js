@@ -86,7 +86,7 @@ const Menu = ({ file, updateSelectedFile, userLogo }) => {
 
   const printFallback = (content) => {
     const logoHTML = createLogoHTML();
-    
+
     // Create a hidden div with the content
     const printDiv = document.createElement('div');
     printDiv.innerHTML = `
@@ -147,7 +147,18 @@ const Menu = ({ file, updateSelectedFile, userLogo }) => {
           content,
           filename
         );
+
+        // Save the file with the user-provided name
         storeRef.current._saveFile(fileObj);
+
+        // Check if there exists any file with the name "default" in storage
+        // If it does, delete that "default" file
+        const defaultFile = storeRef.current._getFile('default');
+        if (defaultFile) {
+          storeRef.current._deleteFile('default');
+          console.log('Deleted existing "default" file after Save As');
+        }
+
         updateSelectedFile(filename);
         window.alert(`File ${filename} saved successfully! `);
       } else {

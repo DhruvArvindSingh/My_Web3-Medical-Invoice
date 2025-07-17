@@ -12,6 +12,7 @@ export const usePopup = () => {
 
 export const PopupProvider = ({ children }) => {
   const [activePopup, setActivePopup] = useState(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
 
   const openPopup = (popupName) => {
     setActivePopup(popupName);
@@ -41,6 +42,8 @@ export const PopupProvider = ({ children }) => {
         closePopup,
         togglePopup,
         isPopupActive,
+        autoSaveStatus,
+        setAutoSaveStatus,
       }}
     >
       {children}
