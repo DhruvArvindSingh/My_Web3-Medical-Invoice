@@ -1,166 +1,268 @@
-# Web3-Medical-Invoice
-Medical Billing System with Metamask integration, activation using  ConnectKit and Web3 tooling
+# 🏥 Web3 Medical Invoice System
 
-## Prerequisites
+A modern, decentralized medical billing and invoice management system built with React, featuring Web3 integration, automatic saving, and multi-cloud storage support.
 
-Make sure you have Node.js and Yarn installed on your machine. You can check their versions using the following commands:
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![React](https://img.shields.io/badge/React-18.3.1-blue.svg)
+![Web3](https://img.shields.io/badge/Web3-Enabled-green.svg)
+
+## ✨ Features
+
+### 🔗 Web3 Integration
+- **MetaMask Integration**: Seamless wallet connection using ConnectKit
+- **Multi-Chain Support**: Built with Wagmi and Viem for robust blockchain interactions
+- **WalletConnect**: Support for various wallet providers
+
+### 📊 Spreadsheet Engine
+- **SocialCalc Integration**: Powerful spreadsheet functionality for invoice creation
+- **Real-time Editing**: Live spreadsheet editing with formula support
+- **Export/Import**: Save and load invoice data in multiple formats
+
+### ☁️ Multi-Cloud Storage
+- **AWS S3**: Enterprise-grade object storage
+- **Dropbox**: User-friendly cloud storage with easy sharing
+- **Local Storage**: Offline-first approach with local data persistence
+
+### 🔄 Auto-Save System
+- **Smart Auto-Save**: Automatic saving with configurable intervals
+- **Change Detection**: Intelligent content change monitoring
+- **Retry Logic**: Robust error handling with automatic retries
+- **Visual Indicators**: Real-time save status feedback
+
+### 🎨 User Experience
+- **Responsive Design**: Mobile and desktop optimized
+- **Custom Logo Upload**: Personalized branding for invoices
+- **Tabbed Interface**: Easy switching between storage providers
+- **Search Functionality**: Quick file discovery across storage providers
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+Ensure you have the following installed:
+- **Node.js** (v16 or higher)
+- **Yarn** package manager
+- **Git**
 
 ```bash
+# Check versions
 node -v
 yarn -v
+git --version
 ```
 
-## Getting Started
+### Installation
 
-### Cloning the Repository
-
-Clone your fork of the Web3-Medical-Invoice repository:
-
-```bash
-git clone https://github.com/[USER_NAME]/Web3-Medical-Invoice
-```
-
-### Opening the Project
-
-Open the project in your preferred code editor. If you use Visual Studio Code, you can do this with:
-
-```bash
-code Web3-Medical-Invoice
-```
-
-### Setting Up Environment Variables
-
-1. Create a `.env` file in the root directory of the project:
-
+1. **Clone the repository**
    ```bash
-   touch .env
+   git clone https://github.com/DhruvArvindSingh/My_Web3-Medical-Invoice.git
+   cd My_Web3-Medical-Invoice
    ```
 
-2. Copy the contents from `.env.example` and paste them into `.env`.
+2. **Install dependencies**
+   ```bash
+   yarn install
+   ```
 
-3. Obtain the following credentials:
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
 
-   - **WalletConnect Project ID**: Log into the [WalletConnect dashboard](https://walletconnect.com/) and retrieve your Project ID. Add it to `.env` like this:
-     ```
-     REACT_APP_WALLETCONNECT_PROJECT_ID=<your_walletconnect_project_id>
-     ```
+4. **Configure your `.env` file**
+   ```env
+   # Web3 Configuration
+   REACT_APP_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
+   REACT_APP_ALCHEMY_ID=your_alchemy_api_key
+   
+   # AWS S3 Configuration
+   REACT_APP_REGION=your-aws-region
+   REACT_APP_BUCKET=your-s3-bucket-name
+   REACT_APP_ACCESS_KEY=your-aws-access-key
+   REACT_APP_SECRET_KEY=your-aws-secret-key
+   
+   # Dropbox Configuration
+   REACT_APP_DROPBOX_ACCESS_TOKEN=your-dropbox-access-token
+   ```
 
-   - **Alchemy API Key**: Visit the [Alchemy dashboard](https://dashboard.alchemy.com/) to get your API key. Add it to `.env` like this:
-     ```
-     REACT_APP_ALCHEMY_ID=<your_alchemy_api_key>
-     ```
+5. **Start the development server**
+   ```bash
+   yarn start
+   ```
 
-### Installing Dependencies
+The application will be available at `http://localhost:3000`
 
-Install the necessary dependencies using Yarn:
+## 🔧 Configuration
 
-```bash
-yarn
+### Web3 Setup
+
+#### WalletConnect Project ID
+1. Visit [WalletConnect Cloud](https://cloud.walletconnect.com/)
+2. Create a new project
+3. Copy your Project ID
+4. Add to `.env`: `REACT_APP_WALLETCONNECT_PROJECT_ID=your_project_id`
+
+#### Alchemy API Key
+1. Go to [Alchemy Dashboard](https://dashboard.alchemy.com/)
+2. Create a new app
+3. Copy your API key
+4. Add to `.env`: `REACT_APP_ALCHEMY_ID=your_api_key`
+
+### Cloud Storage Setup
+
+#### AWS S3 Configuration
+```env
+REACT_APP_REGION=us-east-1
+REACT_APP_BUCKET=your-bucket-name
+REACT_APP_ACCESS_KEY=your-access-key
+REACT_APP_SECRET_KEY=your-secret-key
 ```
 
-### Running the Project
-
-To start the project locally and view it in your browser, run:
-
-```bash
-yarn start
-```
-
-The project will be available at `http://localhost:3000`.
-
-## Cloud Storage Integration
-
-The application now supports dual cloud storage providers for saving and managing medical invoices:
-
-### Supported Providers
-
-- **AWS S3**: Enterprise-grade object storage
-- **Dropbox**: User-friendly cloud storage with easy sharing capabilities
-
-### Environment Variables
-
-Add the following environment variables to your `.env` file:
-
-```bash
-# AWS S3 Configuration
-REACT_APP_REGION=your-aws-region
-REACT_APP_BUCKET=your-s3-bucket-name
-REACT_APP_ACCESS_KEY=your-aws-access-key
-REACT_APP_SECRET_KEY=your-aws-secret-key
-
-# Dropbox Configuration
-REACT_APP_DROPBOX_ACCESS_TOKEN=your-dropbox-access-token
-```
-
-### Features
-
-- **Tabbed Interface**: Switch between S3 and Dropbox storage providers
-- **File Management**: Upload, download, edit, and delete invoice files
-- **Search Functionality**: Search through your stored files
-- **Real-time Sync**: Files are automatically refreshed after operations
-- **Cross-Provider Support**: Each tab maintains its own file list and operations
-
-### Usage
-
-1. **Switching Providers**: Click on the S3 or Dropbox tabs to switch between storage providers
-2. **Uploading Files**: Use the "Upload Current Invoice" option to save the current spreadsheet
-3. **Managing Files**: Edit or delete files directly from the interface
-4. **Searching**: Use the search bar to find specific files quickly
-
-### Security Note
-
-⚠️ **Important**: The current implementation stores credentials in frontend environment variables for development purposes. For production deployments, implement proper backend authentication and token management.
-
-### Troubleshooting Dropbox Integration
-
-If you encounter issues with Dropbox integration, follow these steps:
-
-#### 1. **Check Environment Variables**
-Ensure your `.env` file contains the Dropbox access token:
-```bash
-REACT_APP_DROPBOX_ACCESS_TOKEN=your-dropbox-access-token
-```
-
-#### 2. **Get Dropbox Access Token**
+#### Dropbox Configuration
 1. Go to [Dropbox App Console](https://www.dropbox.com/developers/apps)
-2. Click "Create app"
-3. Choose "Scoped access" (recommended) or "Full access"
-4. Select "Full Dropbox" for permissions
-5. Choose "No" for "Can your app be limited to its own folder?"
-6. Give your app a name (e.g., "Medical Invoice App")
-7. Click "Create app"
-8. In your app settings, go to the "Permissions" tab
-9. Enable these permissions:
-   - `files.metadata.read`
-   - `files.content.read`
-   - `files.content.write`
-10. Go to the "Settings" tab
-11. Under "OAuth 2", click "Generate" to create an access token
-12. Copy the generated token (it should be ~64 characters long)
-13. Add it to your `.env` file: `REACT_APP_DROPBOX_ACCESS_TOKEN=your_token_here`
+2. Create a new app with these settings:
+   - **API**: Scoped access
+   - **Access**: Full Dropbox
+   - **Permissions**: `files.metadata.read`, `files.content.read`, `files.content.write`
+3. Generate an access token
+4. Add to `.env`: `REACT_APP_DROPBOX_ACCESS_TOKEN=your_token`
 
-#### 3. **Test Connection**
-- Switch to the Dropbox tab in the application
-- Click the "🔧 Test" button to verify your connection
-- Check the browser console for detailed error messages
+### Auto-Save Configuration
 
-#### 4. **Common Issues**
+The auto-save system can be configured in `src/config/autosave.config.js`:
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| **400 Error** | Invalid API parameters | ✅ Fixed with proper content encoding |
-| **401 Error** | Invalid/expired access token | Check token validity and permissions |
-| **403 Error** | Insufficient app permissions | Enable required permissions in app console |
+```javascript
+export const AUTO_SAVE_CONFIG = {
+  DEBOUNCE_DELAY: 2000,        // Wait 2s after typing stops
+  MIN_SAVE_INTERVAL: 5000,     // Minimum 5s between saves
+  MAX_RETRY_ATTEMPTS: 3,       // Retry failed saves 3 times
+  RETRY_DELAY: 1000,          // Wait 1s between retries
+  SAVED_STATUS_DURATION: 3000, // Show "saved" for 3s
+  ERROR_STATUS_DURATION: 5000  // Show errors for 5s
+};
+```
 
-**401 Error Specific Solutions:**
-1. **Token Expired**: Generate a new access token in Dropbox App Console
-2. **Invalid Token**: Ensure token is copied correctly (no extra spaces)
-3. **Wrong App Type**: Make sure app has "Full Dropbox" access
-4. **Missing Permissions**: Enable `files.content.write` permission
-5. **Token Format**: Token should be ~64 characters, alphanumeric
+## 📱 Usage
 
-#### 5. **Debug Information**
-The application logs detailed error information to the browser console. Check the console for:
-- Access token configuration status
-- API request/response details
-- Error codes and messages
+### Creating Invoices
+1. **Start with Template**: The app loads with a default medical invoice template
+2. **Edit Spreadsheet**: Click on cells to edit patient information, services, and costs
+3. **Add Formulas**: Use spreadsheet formulas for automatic calculations
+4. **Auto-Save**: Changes are automatically saved as you type
+
+### Managing Files
+1. **List Files**: Click "List Files" to view saved invoices
+2. **Cloud Storage**: Use "Cloud" button to access S3/Dropbox files
+3. **Search**: Use the search bar to find specific invoices
+4. **Export/Import**: Save invoices locally or to cloud storage
+
+### Web3 Features
+1. **Connect Wallet**: Click the ConnectKit button to connect your wallet
+2. **Blockchain Integration**: Future features will include on-chain invoice verification
+3. **Multi-Chain**: Support for Ethereum and other EVM-compatible chains
+
+### Customization
+1. **Logo Upload**: Click "Logo" to upload your practice logo
+2. **Auto-Save Settings**: Click the ⚙️ button to configure auto-save preferences
+3. **Responsive Design**: Works seamlessly on desktop and mobile devices
+
+## 🏗️ Project Structure
+
+```
+src/
+├── App/                    # Main application component
+├── components/             # Reusable UI components
+│   ├── AutosaveIndicator/ # Save status indicator
+│   ├── AutosaveSettings/  # Auto-save configuration
+│   └── Login/            # Authentication component
+├── Cloud/                 # Cloud storage integration
+├── Files/                 # Local file management
+├── Logo/                  # Logo upload functionality
+├── Menu/                  # Application menu
+├── config/                # Configuration files
+├── context/               # React context providers
+├── hooks/                 # Custom React hooks
+├── services/              # API and external services
+├── socialcalc/           # Spreadsheet engine
+├── storage/              # Storage abstractions
+└── utils/                # Utility functions
+```
+
+## 🛠️ Available Scripts
+
+```bash
+# Development
+yarn start          # Start development server
+yarn build          # Build for production
+yarn test           # Run test suite
+
+# Linting and Formatting
+yarn lint           # Run ESLint
+yarn format         # Format code with Prettier
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### Dropbox Connection Issues
+- **401 Error**: Check if your access token is valid and has proper permissions
+- **403 Error**: Ensure your app has `files.content.write` permission enabled
+- **400 Error**: Verify the API request format (usually auto-resolved)
+
+#### Web3 Connection Problems
+- **Wallet Not Detected**: Ensure MetaMask or compatible wallet is installed
+- **Network Issues**: Check if you're connected to the correct blockchain network
+- **Transaction Failures**: Verify sufficient gas fees and network connectivity
+
+#### Auto-Save Issues
+- **Not Saving**: Check browser console for errors and verify storage permissions
+- **Frequent Saves**: Adjust `DEBOUNCE_DELAY` in auto-save configuration
+- **Save Failures**: Check network connectivity and storage quotas
+
+### Debug Mode
+Enable debug logging by adding to your `.env`:
+```env
+REACT_APP_DEBUG=true
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- **SocialCalc**: Spreadsheet engine powering the invoice editor
+- **ConnectKit**: Elegant Web3 connection interface
+- **Wagmi**: React hooks for Ethereum
+- **React Query**: Data fetching and caching
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/DhruvArvindSingh/My_Web3-Medical-Invoice/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/DhruvArvindSingh/My_Web3-Medical-Invoice/discussions)
+- **Email**: [Contact Us](mailto:support@example.com)
+
+## 🗺️ Roadmap
+
+- [ ] **Blockchain Invoice Storage**: Store invoice hashes on-chain for verification
+- [ ] **Multi-Currency Support**: Support for various cryptocurrencies
+- [ ] **Patient Portal**: Allow patients to view and pay invoices
+- [ ] **Insurance Integration**: Connect with insurance providers
+- [ ] **Advanced Analytics**: Invoice analytics and reporting
+- [ ] **Mobile App**: Native mobile application
+- [ ] **API Integration**: RESTful API for third-party integrations
+
+---
+
+**Built with ❤️ for the future of medical billing**
