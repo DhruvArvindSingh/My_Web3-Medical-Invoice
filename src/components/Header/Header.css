@@ -41,7 +41,7 @@ button {
 }
 
 /* Responsive design - Convert buttons to icons below 864px */
-@media (max-width: 912px) {
+@media (max-width: 937px) {
     .App-list {
         padding: 8px 12px;
         min-width: 40px;
@@ -82,5 +82,37 @@ button {
         padding: 6px 10px;
         min-width: 36px;
         height: 36px;
+    }
+}
+
+/* Responsive adjustments for screens ≤677px */
+@media (max-width: 677px) {
+    .App-header {
+        padding: 8px 12px;
+        font-size: 14px;
+        /* display: flex; */
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .App-list,
+    .Connect-list {
+        /* margin-left: 2px; */
+        /* margin-right: 2px; */
+        /* padding: 6px 8px; */
+        /* min-width: 32px; */
+        /* height: 32px; */
+        /* font-size: 0.8rem; */
+    }
+
+    /* Ensure header content doesn't overflow */
+    .App-header>* {
+        /* flex-shrink: 0; */
+    }
+
+    /* Stack buttons if needed */
+    .App-header {
+        /* min-height: 50px; */
     }
 }

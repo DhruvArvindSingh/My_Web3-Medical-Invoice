@@ -175,6 +175,15 @@
   cursor: not-allowed;
 }
 
+Button text and icon styling .button-text {
+  display: inline;
+}
+
+/* .button-icon {
+  display: none;
+  font-size: 16px; */
+/* } */
+
 /* Responsive design */
 @media (max-width: 480px) {
   .login-popup {
@@ -193,5 +202,38 @@
   .form-group input {
     font-size: 16px;
     /* Prevents zoom on iOS */
+  }
+}
+
+/* Responsive adjustments for screens ≤599px - Show icons instead of text */
+@media (max-width: 599px) {
+  .auth-button {
+    padding: 8px 12px;
+    min-width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  /* Hide text, show icons */
+  .button-text {
+    display: none;
+  }
+
+  .button-icon {
+    display: inline;
+    font-size: 18px;
+    color: white;
+  }
+
+  /* Ensure icon color is maintained */
+  .auth-button .button-icon {
+    color: white;
+  }
+
+  .auth-button:hover .button-icon {
+    color: white;
   }
 }

@@ -161,3 +161,41 @@
         width: 100%;
     }
 }
+
+/* Additional responsive adjustments for screens ≤677px */
+@media (max-width: 677px) {
+    .Menu select {
+        font-size: 0.9rem;
+        height: 3.2rem;
+        line-height: 3.2rem;
+        padding: 0 2.5rem 0 2.5rem;
+        padding-right: 3.5rem;
+    }
+
+    .export-options {
+        right: auto;
+        left: 0;
+        min-width: calc(100vw - 40px);
+        max-width: calc(100vw - 40px);
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+
+    .export-format-selection {
+        padding: 15px;
+    }
+
+    .export-format-selection h4 {
+        font-size: 14px;
+    }
+
+    .radio-option span {
+        font-size: 13px;
+    }
+
+    .export-btn,
+    .cancel-btn {
+        padding: 8px 16px;
+        font-size: 13px;
+    }
+}

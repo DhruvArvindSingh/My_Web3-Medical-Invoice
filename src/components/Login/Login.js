@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Login.css';
 import ApiService from '../../services/ApiService';
+import { FiLogIn, FiLogOut } from 'react-icons/fi';
 
 const Login = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -155,7 +156,12 @@ const Login = () => {
         className="auth-button"
         onClick={isAuthenticated ? handleLogout : openLoginPopup}
       >
-        {isAuthenticated ? 'Logout' : 'Login'}
+        <span className="button-text">
+          {isAuthenticated ? 'Logout' : 'Login'}
+        </span>
+        <span className="button-icon">
+          {isAuthenticated ? <FiLogOut /> : <FiLogIn />}
+        </span>
       </button>
 
       {showLoginPopup && (
