@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { usePopup } from '../context/PopupContext';
 import { AUTO_SAVE_CONFIG, isAutoSaveEnabled } from '../config/autosave.config';
 import * as AppGeneral from '../socialcalc/AppGeneral';
-import { File, Local } from '../storage/LocalStorage';
+import { File, Local } from '../components/storage/LocalStorage';
 import ApiService from '../services/ApiService';
 
 export const useAutosave = (currentFile, updateSelectedFile) => {

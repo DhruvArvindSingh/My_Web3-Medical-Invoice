@@ -3,18 +3,16 @@ import "./App.css";
 import * as AppGeneral from "../socialcalc/AppGeneral";
 import { DATA } from "../app-data.js";
 
-import Menu from "../Menu/Menu";
-import Files from "../Files/Files";
-import { ConnectKitButton } from "connectkit";
-import Cloud from "../Cloud/Cloud";
-import LogoUpload from "../Logo/LogoUpload";
-import Login from "../components/Login/Login";
+import Menu from "../components/Menu/Menu.js";
+import Files from "../components/Files/Files.js";
+import Cloud from "../components/Cloud/Cloud.js";
+import LogoUpload from "../components/Logo/LogoUpload.js";
+import Header from "../components/Header/Header";
 import ApiService from "../services/ApiService";
 import { PopupProvider, usePopup } from "../context/PopupContext";
 import { useAutosave } from "../hooks/useAutosave";
-import AutosaveIndicator from "../components/AutosaveIndicator/AutosaveIndicator";
 import AutosaveSettings from "../components/AutosaveSettings/AutosaveSettings";
-import { Local } from "../storage/LocalStorage";
+import { Local } from "../components/storage/LocalStorage.js";
 
 const AppContent = () => {
   const [selectedFile, setSelectedFile] = useState("default");
@@ -168,39 +166,13 @@ const AppContent = () => {
 
   return (
     <div className="App">
-      <div className="App-header">
-        <span>Editing: {selectedFile} </span>
-        <AutosaveIndicator />
-        <span className="Connect-list">
-          <ConnectKitButton />
-        </span>
-        <Login />
-        <button
-          className={`App-list ${isPopupActive('cloud') ? 'active' : ''}`}
-          onClick={handleToggleCloud}
-        >
-          Cloud
-        </button>
-        <button
-          className={`App-list ${isPopupActive('listFiles') ? 'active' : ''}`}
-          onClick={handleToggleListFiles}
-        >
-          List Files
-        </button>
-        <button
-          className={`App-list ${isPopupActive('logo') ? 'active' : ''}`}
-          onClick={handleToggleLogo}
-        >
-          Logo
-        </button>
-        <button
-          className="App-list"
-          onClick={handleToggleAutosaveSettings}
-          title="Autosave Settings"
-        >
-          ⚙️
-        </button>
-      </div>
+      <Header
+        selectedFile={selectedFile}
+        onToggleCloud={handleToggleCloud}
+        onToggleListFiles={handleToggleListFiles}
+        onToggleLogo={handleToggleLogo}
+        onToggleAutosaveSettings={handleToggleAutosaveSettings}
+      />
       <div className="App-menu">
         <Menu
           file={selectedFile}

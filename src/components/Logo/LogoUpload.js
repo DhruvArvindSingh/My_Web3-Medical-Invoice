@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
-import ApiService from '../services/ApiService';
+import ApiService from '../../services/ApiService';
 import './LogoUpload.css';
-import * as AppGeneral from '../socialcalc/AppGeneral';
-import { LOGO } from '../app-data';
+import * as AppGeneral from '../../socialcalc/AppGeneral';
+import { LOGO } from '../../app-data';
 
 const LogoUpload = ({ userLogo, setUserLogo, onLogoChange }) => {
     const [isUploading, setIsUploading] = useState(false);

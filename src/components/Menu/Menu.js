@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
 import "./Menu.css";
-import * as AppGeneral from "../socialcalc/AppGeneral";
+import * as AppGeneral from "../../socialcalc/AppGeneral.js";
 import { File, Local } from "../storage/LocalStorage.js";
-import { DATA } from "../app-data.js";
+import { DATA } from "../../app-data.js";
 
 const Menu = ({ file, updateSelectedFile, userLogo }) => {
   const [exportFormat, setExportFormat] = useState('');

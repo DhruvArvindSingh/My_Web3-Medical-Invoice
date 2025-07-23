@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import './Cloud.css';
-import * as AppGeneral from '../socialcalc/AppGeneral';
+import * as AppGeneral from '../../socialcalc/AppGeneral.js';
 import { Local, File } from '../storage/LocalStorage.js';
-import { DATA } from '../app-data.js';
-import ApiService from '../services/ApiService';
+import { DATA } from '../../app-data.js';
+import ApiService from '../../services/ApiService.js';
 
 const Cloud = ({ file, updateSelectedFile }) => {
     const localStoreRef = useRef(new Local());
@@ -526,7 +526,7 @@ const Cloud = ({ file, updateSelectedFile }) => {
 
             // Clear selections
             setSelectedCloudFiles({});
-            
+
             if (successCount > 0) {
                 alert(`Successfully downloaded ${successCount} file(s) to local storage${errorCount > 0 ? ` (${errorCount} failed)` : ''}`);
             } else {

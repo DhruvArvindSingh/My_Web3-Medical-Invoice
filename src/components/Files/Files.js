@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Files.css';
-import * as AppGeneral from '../socialcalc/AppGeneral';
+import * as AppGeneral from '../../socialcalc/AppGeneral.js';
 import { Local } from '../storage/LocalStorage.js';
-import { DATA } from '../app-data.js';
-import ApiService from '../services/ApiService';
+import { DATA } from '../../app-data.js';
+import ApiService from '../../services/ApiService.js';
 
 const Files = ({ file, updateSelectedFile }) => {
 	const storeRef = useRef(new Local(file));

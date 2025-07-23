@@ -52,7 +52,7 @@ const Login = () => {
   const handleEmailChange = (e) => {
     const value = e.target.value;
     setEmail(value);
-    
+
     if (value && !validateEmail(value)) {
       setEmailError('Please enter a valid email address');
     } else {
@@ -63,7 +63,7 @@ const Login = () => {
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setPassword(value);
-    
+
     if (value && !validatePassword(value)) {
       setPasswordError('Password must be at least 6 characters long');
     } else {
@@ -74,10 +74,10 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError('');
-    
+
     // Validate inputs
     let hasErrors = false;
-    
+
     if (!email) {
       setEmailError('Email is required');
       hasErrors = true;
@@ -85,7 +85,7 @@ const Login = () => {
       setEmailError('Please enter a valid email address');
       hasErrors = true;
     }
-    
+
     if (!password) {
       setPasswordError('Password is required');
       hasErrors = true;
@@ -93,14 +93,14 @@ const Login = () => {
       setPasswordError('Password must be at least 6 characters long');
       hasErrors = true;
     }
-    
+
     if (hasErrors) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       const response = await ApiService.signin({ email, password });
-      
+
       if (response.success && response.data && response.data.token) {
         setIsAuthenticated(true);
         setShowLoginPopup(false);
@@ -151,8 +151,8 @@ const Login = () => {
 
   return (
     <>
-      <button 
-        className="auth-button" 
+      <button
+        className="auth-button"
         onClick={isAuthenticated ? handleLogout : openLoginPopup}
       >
         {isAuthenticated ? 'Logout' : 'Login'}
@@ -167,7 +167,7 @@ const Login = () => {
                 ×
               </button>
             </div>
-            
+
             <form onSubmit={handleLogin} className="login-form">
               <div className="form-group">
                 <label htmlFor="email">Email</label>
@@ -199,8 +199,8 @@ const Login = () => {
 
               {authError && <div className="auth-error">{authError}</div>}
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 className="submit-button"
                 disabled={isLoading || emailError || passwordError}
               >
