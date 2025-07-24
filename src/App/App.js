@@ -40,8 +40,14 @@ const AppContent = () => {
     togglePopup('logo');
   };
 
-  const handleToggleAutosaveSettings = () => {
-    setShowAutosaveSettings(true);
+  const handleUndo = () => {
+    // Implement undo functionality using AppGeneral
+    AppGeneral.undo();
+  };
+
+  const handleRedo = () => {
+    // Implement redo functionality using AppGeneral
+    AppGeneral.redo();
   };
 
   const handleCloseAutosaveSettings = () => {
@@ -171,7 +177,8 @@ const AppContent = () => {
         onToggleCloud={handleToggleCloud}
         onToggleListFiles={handleToggleListFiles}
         onToggleLogo={handleToggleLogo}
-        onToggleAutosaveSettings={handleToggleAutosaveSettings}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
       />
       <div className="App-menu">
         <Menu

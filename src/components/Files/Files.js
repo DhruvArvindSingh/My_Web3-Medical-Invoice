@@ -18,6 +18,23 @@ const Files = ({ file, updateSelectedFile }) => {
 
 	const editFile = (key) => {
 		const data = storeRef.current._getFile(key);
+
+		// Check if file is password protected
+		if (data.password && typeof data.password === 'string' && data.password.trim() !== '') {
+			const userPassword = window.prompt(`File "${key}" is password protected. Enter password:`);
+
+			if (!userPassword) {
+				// User cancelled password prompt
+				return;
+			}
+
+			if (userPassword.trim() !== data.password.trim()) {
+				window.alert('Incorrect password! Access denied.');
+				return;
+			}
+		}
+
+		// Password is correct or file is not password protected
 		AppGeneral.viewFile(key, decodeURIComponent(data.content));
 		updateSelectedFile(key);
 	};
@@ -189,6 +206,9 @@ const Files = ({ file, updateSelectedFile }) => {
 	);
 
 	const fileList = filteredFiles.map(key => {
+		const fileData = storeRef.current._getFile(key);
+		const isPasswordProtected = fileData && fileData.password && typeof fileData.password === 'string' && fileData.password.trim() !== '';
+
 		return (
 			<div key={key} className="file-item">
 				<div className="file-info">
@@ -199,7 +219,10 @@ const Files = ({ file, updateSelectedFile }) => {
 						className="file-checkbox"
 					/>
 					<div className="file-details">
-						<span className="file-name">{key}</span>
+						<span className="file-name">
+							{isPasswordProtected && <span className="password-icon">🔒 </span>}
+							{key}
+						</span>
 						<span className="file-date">{formatDate(files[key])}</span>
 					</div>
 				</div>

@@ -2,11 +2,11 @@ import React from "react";
 import "./Header.css";
 import { ConnectKitButton } from "connectkit";
 import Login from "../Login/Login";
-import AutosaveIndicator from "../AutosaveIndicator/AutosaveIndicator";
 import { usePopup } from "../../context/PopupContext";
-import { FaCloud, FaFolderOpen, FaImage, FaCog } from "react-icons/fa";
+import { FaCloud, FaFolderOpen, FaImage } from "react-icons/fa";
+import { MdUndo, MdRedo } from "react-icons/md";
 
-const Header = ({ selectedFile, onToggleCloud, onToggleListFiles, onToggleLogo, onToggleAutosaveSettings }) => {
+const Header = ({ selectedFile, onToggleCloud, onToggleListFiles, onToggleLogo, onUndo, onRedo }) => {
     const { isPopupActive } = usePopup();
 
     return (
@@ -16,7 +16,6 @@ const Header = ({ selectedFile, onToggleCloud, onToggleListFiles, onToggleLogo, 
                 <ConnectKitButton />
             </span>
             <Login />
-            <AutosaveIndicator />
             <button
                 className={`App-list ${isPopupActive('cloud') ? 'active' : ''}`}
                 onClick={onToggleCloud}
@@ -40,11 +39,19 @@ const Header = ({ selectedFile, onToggleCloud, onToggleListFiles, onToggleLogo, 
             </button>
             <button
                 className="App-list"
-                onClick={onToggleAutosaveSettings}
-                title="Autosave Settings"
+                onClick={onUndo}
+                title="Undo"
             >
-                <span className="button-text">Settings</span>
-                <FaCog className="button-icon" />
+                <span className="button-text">Undo</span>
+                <MdUndo className="button-icon" />
+            </button>
+            <button
+                className="App-list"
+                onClick={onRedo}
+                title="Redo"
+            >
+                <span className="button-text">Redo</span>
+                <MdRedo className="button-icon" />
             </button>
         </div>
     );

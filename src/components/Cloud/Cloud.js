@@ -558,7 +558,7 @@ const Cloud = ({ file, updateSelectedFile }) => {
                 fileData.modified || new Date().toString(),
                 encodeURIComponent(fileData.content),
                 filename,
-                1 // password/billType parameter
+                undefined // No password for cloud files by default
             );
 
             // Save to local storage using the Local class _saveFile method

@@ -6,6 +6,7 @@ import { DATA } from "../../app-data.js";
 
 const Menu = ({ file, updateSelectedFile, userLogo }) => {
   const [exportFormat, setExportFormat] = useState('');
+  const [saveFormat, setSaveFormat] = useState('');
   const storeRef = useRef(new Local(file));
 
 
@@ -128,7 +129,8 @@ const Menu = ({ file, updateSelectedFile, userLogo }) => {
       data.created,
       new Date().toString(),
       content,
-      file
+      file,
+      data?.password // Preserve existing password if it exists
     );
     storeRef.current._saveFile(fileObj);
     updateSelectedFile(file);
@@ -164,6 +166,62 @@ const Menu = ({ file, updateSelectedFile, userLogo }) => {
       } else {
         window.alert(`Filename cannot be ${file}`);
       }
+    }
+  };
+
+  const doSaveAsPasswordProtected = (event) => {
+    event.preventDefault();
+    const filename = window.prompt("Enter filename : ");
+    if (filename) {
+      if (validateName(filename)) {
+        const password = window.prompt("Enter password for this file : ");
+        if (password && typeof password === 'string' && password.trim() !== '') {
+          const content = encodeURIComponent(AppGeneral.getSpreadsheetContent());
+          const fileObj = new File(
+            new Date().toString(),
+            new Date().toString(),
+            content,
+            filename,
+            password.trim()
+          );
+
+          // Save the file with the user-provided name and password
+          storeRef.current._saveFile(fileObj);
+
+          // Check if there exists any file with the name "default" in storage
+          // If it does, delete that "default" file
+          const defaultFile = storeRef.current._getFile('default');
+          if (defaultFile) {
+            storeRef.current._deleteFile('default');
+            console.log('Deleted existing "default" file after Save As');
+          }
+
+          updateSelectedFile(filename);
+          window.alert(`Password-protected file ${filename} saved successfully! `);
+        } else {
+          window.alert('Password cannot be empty for password-protected files!');
+        }
+      } else {
+        window.alert(`Filename cannot be ${file}`);
+      }
+    }
+  };
+
+  const handleSaveAsChange = (event) => {
+    const format = event.target.value;
+    event.target.value = '';
+    setSaveFormat(format);
+
+    if (format !== '') {
+      if (format === 'regular') {
+        doSaveAs(event);
+      } else if (format === 'password') {
+        doSaveAsPasswordProtected(event);
+      }
+
+      setTimeout(() => {
+        setSaveFormat('');
+      }, 100);
     }
   };
 
@@ -327,7 +385,15 @@ const Menu = ({ file, updateSelectedFile, userLogo }) => {
   return (
     <div className="Menu">
       <button onClick={doSave}> Save </button>
-      <button onClick={doSaveAs}> Save As </button>
+      <select
+        value={saveFormat}
+        onChange={handleSaveAsChange}
+        className="export-select"
+      >
+        <option value="">Save As...</option>
+        <option value="regular">Save As</option>
+        <option value="password">Save As Password Protected</option>
+      </select>
       <button onClick={doPrint}> Print </button>
       <button onClick={newFile}> New File </button>
       <select

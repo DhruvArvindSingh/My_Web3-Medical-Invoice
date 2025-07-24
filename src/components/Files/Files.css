@@ -192,7 +192,8 @@
 	gap: 8px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
 	padding: 6px 12px;
 	font-size: 12px;
 	border: 1px solid #e1e1e1;
@@ -222,7 +223,8 @@
 	background-color: #c82333;
 }
 
-.edit-btn:disabled, .delete-btn:disabled {
+.edit-btn:disabled,
+.delete-btn:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
 }
@@ -291,7 +293,9 @@
 	justify-content: flex-end;
 }
 
-.cancel-btn, .skip-btn, .overwrite-btn {
+.cancel-btn,
+.skip-btn,
+.overwrite-btn {
 	padding: 8px 16px;
 	border: 1px solid #ccc;
 	border-radius: 4px;
@@ -356,6 +360,13 @@
 	.alert-buttons {
 		flex-direction: column;
 	}
+}
+
+/* Password Protection Styling */
+.password-icon {
+	color: #dc3545;
+	font-size: 12px;
+	margin-right: 4px;
 }
 
 /* Legacy list styles - keep for backward compatibility */

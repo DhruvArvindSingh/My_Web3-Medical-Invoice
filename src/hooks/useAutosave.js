@@ -73,7 +73,8 @@ export const useAutosave = (currentFile, updateSelectedFile) => {
                 existingData?.created || new Date().toString(),
                 new Date().toString(),
                 encodeURIComponent(content),
-                saveFileName
+                saveFileName,
+                existingData?.password // Preserve existing password if it exists
             );
 
             // Perform save operation to local storage
@@ -129,7 +130,8 @@ export const useAutosave = (currentFile, updateSelectedFile) => {
                 existingData?.created || new Date().toString(),
                 new Date().toString(),
                 encodeURIComponent(content),
-                backendFileName
+                backendFileName,
+                existingData?.password // Preserve existing password if it exists
             );
 
             storeRef.current._saveFile(fileObj);
